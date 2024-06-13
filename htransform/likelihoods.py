@@ -15,7 +15,28 @@ from utils.fft_utils import fft2_m, ifft2_m
 from radon.tomography import Tomography
 
 def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
+    """
+    For the various inversion tasks, we have slightly different inputs to the model. 
+
+    Superresolution, Radon, HDR, NonLinearBlur: 
+        xi (noisy image at step i)
+        x0hat (tweedie based on unconditional diffusion model)
+        log_grad term ( A*(Ax0hat - y) )
     
+    PhaseRetrieval:
+        xi (noisy image at step i)
+        x0hat (tweedie based on unconditional diffusion model)
+        log_grad term ( A*(Ax0hat - y) )
+        cheap_guidance ( magnitude(y) and phase(x0hat))
+        simple inverse (few steps of Hybrid-Input-Output)
+
+    InPainting:
+        xi (noisy image at step i)
+        x0hat (tweedie based on unconditional diffusion model)
+        y (the masked measurements (masked elements = 0))
+        masks (binary mask)
+        log_grad term ( A*(Ax0hat - y) )
+    """
     
     if (
         isinstance(likelihood, Superresolution)
