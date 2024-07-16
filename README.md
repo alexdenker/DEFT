@@ -2,7 +2,7 @@
 
 Alexander Denker*, Francisco Vargas*, Shreyas Padhy*, Kieran Didi*, Simon Mathis*, Vincent Dutordoir, Riccardo Barbano, Emile Mathieu, Urszula Julia Komorowska, Pietro Lio 
 
-This repository will contain the implementation of DEFT as a fork of RED-diff. 
+**This repository will contain the implementation of DEFT as a fork of RED-diff.**
 
 
 
