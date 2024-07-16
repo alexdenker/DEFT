@@ -1,3 +1,25 @@
+"""
+This file includes the likelihood used for the imaging experiments in the paper. 
+The likelihoods are implemented as sub-classes of *Likelihood*. 
+
+These likelihood are wrappers for the forward operators defined in utils/degredations.py, 
+but provide useful new functionalities, i.e., sampling and log_likelihood_grad.s
+
+This file includes:
+- Painting (Out/Inpainting)
+- Superresolution
+- HDR (high dynamic range, non-linear operator)
+- NonLinearBlur (corrected)
+- PhaseRetrieval (non-linear)
+- Radon (based on https://github.com/deepinv/deepinv/blob/main/deepinv/physics/functional/radon.py)
+- Blur (based on https://github.com/deepinv/deepinv/blob/main/deepinv/physics/functional/convolution.py)
+
+Note that for some non-linear forward operator, we do not use the mathematical likelihood gradient, but 
+rather cheaper approximations to facilitate faster training/sampling.
+
+"""
+
+
 import io
 from pathlib import Path
 
