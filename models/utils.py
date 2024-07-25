@@ -2,7 +2,6 @@ import argparse
 
 from models.guided_diffusion.unet import UNetModel
 from models.guided_diffusion.unet_cond import CondUNetModel
-from models.guided_diffusion.unet_cross import UNetCrossModel
 
 import argparse 
 from collections.abc import MutableMapping
