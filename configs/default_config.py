@@ -17,10 +17,6 @@ def get_config(config_str):
         model_trained_on = dname
         task = "finetuning"
         inversion_task = inversion_task
-    elif extra_args[0] == "run_adapted_sampling":
-        assert len(extra_args) == 3
-        task, model_trained_on, dname = extra_args[0], extra_args[1], extra_args[-1]
-        inversion_task == None
     elif extra_args[0] == "cond_sampling":
         assert len(extra_args) == 3
         task, dname, inversion_task = extra_args[0], extra_args[1], extra_args[2]
@@ -104,7 +100,7 @@ def get_config(config_str):
     config.wandb.log_artifact = False
     config.wandb.project = "diff-models_" + task
     config.wandb.entity = ""
-    config.wandb.code_dir = "./"  # "./"
+    config.wandb.code_dir = "./" 
     config.wandb.name = ""
 
     return config
@@ -161,9 +157,9 @@ def set_task_configs(config, task_name, model_trained_on, dname):
         dataset.root = ""
         dataset.meta_root = "_data"
         dataset.subset_txt = (
-            "imagenet_10k.txt"
+            "datasets/data/imagenet_10k.txt"
         )
-        dataset.val_subset_txt = "imagenet_1k_val.txt"
+        dataset.val_subset_txt = "datasets/data/imagenet_1k_val.txt"
         dataset.use_default_loader = False
 
     if task_name == "cond_sampling":
@@ -174,6 +170,6 @@ def set_task_configs(config, task_name, model_trained_on, dname):
         dataset.root = "" 
         dataset.meta_root = "_data"
         dataset.subset_txt = (
-            "imagenet_10k.txt"  # "/home/sp2058/adapt-diffusions/imagenet_10k.txt"
+            "datasets/data/imagenet_10k.txt" 
         )
         dataset.use_default_loader = False
