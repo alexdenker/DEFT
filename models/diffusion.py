@@ -41,3 +41,6 @@ class Diffusion:
     
     def alpha(self, t):
         return self.alphas.index_select(0, t+1)
+
+    def beta(self, t):
+        return self.betas.index_select(0, t + 1)
