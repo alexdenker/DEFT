@@ -55,7 +55,6 @@ def create_model(
     use_new_attention_order=False,
     finetuning=False,
     learn_sigma=False,
-    use_cross_attention=False,
     cond_model=False,
     use_residual=False,
     epsilon_based=False,
@@ -80,12 +79,10 @@ def create_model(
     for res in attention_resolutions.split(","):
         attention_ds.append(image_size // int(res))
 
-    if use_cross_attention:
-        model = UNetCrossModel
-    else:
-        model = UNetModel
     if cond_model:
         model = CondUNetModel
+    else:
+        model = UNetModel
 
     return model(
         image_size=image_size,
@@ -111,13 +108,3 @@ def create_model(
         init_scaling_bias=init_scaling_bias,
     )
 
-
-def dict2namespace(config):
-    namespace = argparse.Namespace()
-    for key, value in config.items():
-        if isinstance(value, dict):
-            new_value = dict2namespace(value)
-        else:
-            new_value = value
-        setattr(namespace, key, new_value)
-    return namespace
