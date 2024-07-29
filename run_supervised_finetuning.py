@@ -115,7 +115,7 @@ def coordinator(args):
         model_config = dict2namespace(model_config)
 
         sde = Diffusion(
-             Ns=model_config.diffusion.num_diffusion_timesteps, device=args.device)
+             num_diffusion_timesteps=model_config.diffusion.num_diffusion_timesteps)
 
         pretrained_model = create_model(**vars(model_config.model))
         pretrained_model.convert_to_fp32()

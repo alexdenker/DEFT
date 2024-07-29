@@ -3,6 +3,8 @@ Adapted from Dival
 """
 import numpy as np 
 
+np.object = object 
+
 from torch import Tensor 
 from torch.utils.data import DataLoader
 from dival import get_standard_dataset
