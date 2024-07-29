@@ -445,6 +445,7 @@ class UNetModel(nn.Module):
         use_scale_shift_norm=False,
         resblock_updown=False,
         use_new_attention_order=False,
+        learn_sigma=False,
         **kwargs
     ):
         super().__init__()
@@ -467,6 +468,7 @@ class UNetModel(nn.Module):
         self.num_heads = num_heads
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
+        self.learn_sigma = learn_sigma
 
         time_embed_dim = model_channels * 4
         self.time_embed = nn.Sequential(
@@ -613,7 +615,10 @@ class UNetModel(nn.Module):
         self.out = nn.Sequential(
             normalization(ch),
             nn.SiLU(),
-            zero_module(conv_nd(dims, input_ch, out_channels, 3, padding=1)),
+            zero_module(conv_nd(dims, 
+                                input_ch, 
+                                2 * out_channels if self.learn_sigma else out_channels,
+                                  3, padding=1)),
         )
         if use_fp16:
             self.convert_to_fp16()
@@ -670,7 +675,10 @@ class UNetModel(nn.Module):
             h = th.cat([h, hs.pop()], dim=1)
             h = module(h, emb)
         h = h.type(x.dtype)
-        return self.out(h)
+        if self.learn_sigma:
+            return self.out(h)[:, : self.out_channels]
+        else:
+            return self.out(h)
 
 
 class SuperResModel(UNetModel):

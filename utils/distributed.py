@@ -7,7 +7,7 @@ import torch
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from omegaconf import OmegaConf
-from hydra.core.hydra_config import HydraConfig
+#from hydra.core.hydra_config import HydraConfig
 
 
 def init_processes(rank, size, fn, cfg, cwd):

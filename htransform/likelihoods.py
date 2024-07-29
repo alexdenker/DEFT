@@ -94,10 +94,10 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
 
         xi_condition = torch.concat(
             (
-                xi,
-                x0hat,
-                y,
-                masks[:, None, :, :].float(),
+                xi, # noisy image
+                x0hat, # unconditional denoised image
+                y, # measurements 
+                masks[:, None, :, :].float(), # mask
                 cheap_guidance,
             ),
             dim=1,

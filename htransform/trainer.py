@@ -110,7 +110,6 @@ def htransform_trainer(
                 diffusion=diffusion,
                 pretrained_model=pretrained_model,
                 likelihood=likelihood,
-                cfg_train=cfg_train,
                 cfg_model=cfg_model
                 )
             loss.backward()

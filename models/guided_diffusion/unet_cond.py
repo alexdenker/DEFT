@@ -17,7 +17,7 @@ from .nn import (
     zero_module,
 )
 
-from .unet_cond import (AttentionPool2d, 
+from .unet import (AttentionPool2d, 
                         TimestepBlock, 
                         TimestepEmbedSequential, 
                         Upsample, 
