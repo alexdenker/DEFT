@@ -5,6 +5,9 @@ _data
 dist/
 !_configs/exp/
 !_configs/dist/
+pretrained_model/
+wandb/
+finetuning/
 
 src/
 

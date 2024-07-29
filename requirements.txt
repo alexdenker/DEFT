@@ -30,3 +30,4 @@ opencv-python-headless==4.5.5.64
 diffusers
 transformers
 kornia
+git+https://github.com/google/ml_collections.git
