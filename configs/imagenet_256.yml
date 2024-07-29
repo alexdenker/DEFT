@@ -10,9 +10,7 @@ data:
     num_workers: 32
     subset_1k: True
     out_of_dist: False
-    model_path: "/localdata/AlexanderDenker/score_based_baseline/ImageNet/imagenet256.pt"
-    #model_path: "/home/sp2058/adapt-diffusions/_exp/ckpts/imagenet/256x256_diffusion_uncond.pt"
-    #subset_txt: "/home/sp2058/adapt-diffusions/imagenet_10k.txt"
+    model_path: "pretrained_model/256x256_diffusion_uncond.pt"
     subset_txt: "imagenet_10k.txt"
 
 model:
