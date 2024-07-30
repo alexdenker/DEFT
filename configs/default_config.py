@@ -67,8 +67,8 @@ def get_config(config_str):
 
     # training configs
     config.training = training = ml_collections.ConfigDict()
-    training.batch_size = 3
-    training.epochs = 40
+    training.batch_size = 4
+    training.epochs = 200
     training.log_freq = 1
     training.lr = 1e-4
     training.ema_decay = 0.999
@@ -83,11 +83,11 @@ def get_config(config_str):
 
     # validation configs
     config.validation = validation = ml_collections.ConfigDict()
-    validation.batch_size = 6
+    validation.batch_size = 10
     validation.psnr_batch_size = 100
     validation.num_steps = 100
     validation.eta = 0.0
-    validation.sample_freq = 1  # 0 = NO VALIDATION SAMPLES DURING TRAINING
+    validation.sample_freq = 5  # 0 = NO VALIDATION SAMPLES DURING TRAINING
     validation.psnr_sample_freq = -1
     validation.use_ema = False
     validation.perform_eval = False
@@ -125,8 +125,8 @@ def set_task_configs(config, task_name, model_trained_on, dname):
         config.finetune_model_config = finetune_model = ml_collections.ConfigDict()
         finetune_model.type = "openai"
         finetune_model.in_channels = 2
-        finetune_model.out_channels = 1
-        finetune_model.num_channels = 256
+        finetune_model.out_channels = 3
+        finetune_model.num_channels = 64
         finetune_model.num_heads = 4
         finetune_model.num_res_blocks = 1
         finetune_model.attention_resolutions = "32,16"
@@ -139,7 +139,7 @@ def set_task_configs(config, task_name, model_trained_on, dname):
         finetune_model.resblock_updown = True
         finetune_model.num_heads_upsample = -1
         finetune_model.var_type = "fixedsmall"
-        finetune_model.num_head_channels = 64
+        finetune_model.num_head_channels = 16
         finetune_model.image_size = 256
         finetune_model.use_new_attention_order = False
 

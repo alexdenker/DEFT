@@ -16,6 +16,14 @@ speedups of up to 1.6x, while having the best perceptual quality on natural imag
 
 ## Getting Started
 
+### Inpainting Example 
+
+```
+python python run_supervised_finetuning.py --config configs/default_config.py:finetuning:imagenet:inp   --config.finetune_model_config.in_channels 13 --config.forward_op.noise_std 0.0 --config.wandb.log --config.wandb.name "finetuning, inp" --config.finetune_model_config.use_residual --config.training.lr_annealing  --config.dataset.root "path/to/imagenet
+
+```
+
+
 ## Citation
 
 If you find this work helpful please cite:
