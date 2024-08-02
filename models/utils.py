@@ -1,6 +1,7 @@
 import argparse
 
 from models.guided_diffusion.unet import UNetModel
+from models.guided_diffusion.cldm import ControlledUnetModel, ControlNet
 from models.guided_diffusion.unet_cond import CondUNetModel
 
 import argparse 
@@ -79,10 +80,17 @@ def create_model(
     for res in attention_resolutions.split(","):
         attention_ds.append(image_size // int(res))
 
+    model = UNetModel
+
     if cond_model:
         model = CondUNetModel
-    else:
-        model = UNetModel
+
+    controlled = kwargs.get("controlled", False)
+    if controlled:
+        print("Use ControlNet")
+
+        model = ControlledUnetModel
+    
 
     return model(
         image_size=image_size,
@@ -108,3 +116,55 @@ def create_model(
         init_scaling_bias=init_scaling_bias,
     )
 
+
+
+def create_controlnet(
+    image_size,
+    num_channels,
+    in_channels,
+    cond_channels,
+    num_res_blocks,
+    channel_mult="",
+    attention_resolutions="16",
+    num_heads=1,
+    num_head_channels=-1,
+    use_scale_shift_norm=False,
+    dropout=0,
+    resblock_updown=False,
+    use_new_attention_order=False,
+    **kwargs,
+):
+    if channel_mult == "":
+        if image_size == 512:
+            channel_mult = (0.5, 1, 1, 2, 2, 4, 4)
+        elif image_size == 256 or image_size == 320:
+            channel_mult = (1, 1, 2, 2, 4, 4)
+        elif image_size == 128:
+            channel_mult = (1, 1, 2, 3, 4)
+        elif image_size == 64:
+            channel_mult = (1, 2, 3, 4)
+        else:
+            raise ValueError(f"unsupported image size: {image_size}")
+    else:
+        channel_mult = tuple(int(ch_mult) for ch_mult in channel_mult.split(","))
+
+    attention_ds = []
+    for res in attention_resolutions.split(","):
+        attention_ds.append(image_size // int(res))
+
+
+    return ControlNet(
+        image_size=image_size,
+        in_channels=in_channels,
+        cond_channels=cond_channels,
+        model_channels=num_channels,
+        num_res_blocks=num_res_blocks,
+        attention_resolutions=tuple(attention_ds),
+        dropout=dropout,
+        channel_mult=channel_mult,
+        num_heads=num_heads,
+        num_head_channels=num_head_channels,
+        use_scale_shift_norm=use_scale_shift_norm,
+        resblock_updown=resblock_updown,
+        use_new_attention_order=use_new_attention_order,
+    )

@@ -33,3 +33,4 @@ class ClassifierGuidanceModel:
 
             scale = scale * self.cfg.classifier.classifier_scale
             return torch.autograd.grad(selected.sum(), x_in, create_graph=True)[0] * scale
+        

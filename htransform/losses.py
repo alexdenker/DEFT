@@ -52,3 +52,39 @@ def epsilon_based_loss_fn_finetuning(
         loss = torch.mean(torch.sum((z - zhat) ** 2, dim=(1,)))
 
     return loss
+
+
+
+def controlnet_loss(
+    x: torch.Tensor, 
+    controlnet: CondUNetModel, 
+    diffusion: Diffusion, 
+    pretrained_model: torch.nn.Module, 
+    likelihood: Likelihood, 
+    cfg_model 
+):
+    if isinstance(likelihood, InPainting):
+        y, masks = likelihood.sample(x)
+        cond = torch.cat([y, masks.unsqueeze(1)], dim=1)
+    else:
+        cond = likelihood.sample(x)
+        masks = None
+    device = x.device
+    b = x.shape[0]
+    i = torch.randint(0, diffusion.num_diffusion_timesteps, (b,), device=device).long()
+
+    alpha_t = diffusion.alpha(i).view(-1, 1, 1, 1)
+
+    z = torch.randn_like(x)
+
+    xi = alpha_t.sqrt() * x + (1 - alpha_t).sqrt() * z
+
+    control = controlnet(xi, i, cond)
+    zhat = pretrained_model(xi, i, control=control)
+
+    if zhat.ndim == 4:
+        loss = torch.mean(torch.sum((z - zhat) ** 2, dim=(1, 2, 3)))
+    elif zhat.ndim == 2:
+        loss = torch.mean(torch.sum((z - zhat) ** 2, dim=(1,)))
+
+    return loss
