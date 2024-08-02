@@ -219,10 +219,10 @@ def coordinator(args):
             )
 
             # ONLY USE A SMALL SUBSET FOR A QUICK VALIDATION
-            print("WARNING: ONLY USE A SMALL SUBSET OF 20 IMAGES FOR A QUICK VALIDATION")
-            psnr_val_image_dataset = torch.utils.data.Subset(
-                psnr_val_image_dataset, np.arange(0, 20)
-             )
+            #print("WARNING: ONLY USE A SMALL SUBSET OF 20 IMAGES FOR A QUICK VALIDATION")
+            #psnr_val_image_dataset = torch.utils.data.Subset(
+            #    psnr_val_image_dataset, np.arange(0, 20)
+            # )
 
             class DatasetWrapper(torch.utils.data.Dataset):
                 def __init__(self, image_dataset):
@@ -345,6 +345,8 @@ def coordinator(args):
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
+        print("----------------------------\n")
+        print("RESULTS WILL BE LOGGED TO: ", log_dir)
 
         with open(os.path.join(log_dir, "report.yaml"), "w") as file:
             try:
@@ -370,7 +372,7 @@ def coordinator(args):
                 "psnr_batch_size": args.validation.psnr_batch_size,
                 "rescale_image": model_config.data.rescaled,
             },
-            save_images=True,
+            save_images=False,
             save_path=log_dir,
             image_path=image_path,
         )

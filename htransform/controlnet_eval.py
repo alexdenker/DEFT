@@ -8,6 +8,7 @@ from skimage.metrics import peak_signal_noise_ratio
 from torchmetrics.functional import structural_similarity_index_measure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from tqdm import tqdm
+import torchvision.utils as tvu 
 
 import wandb
 from algos.ddim import DDIM
@@ -15,6 +16,24 @@ from htransform.likelihoods import InPainting, get_xi_condition
 from models.classifier_guidance_model import ClassifierGuidanceModel
 from models.diffusion import Diffusion
 from models.utils import get_timesteps
+
+def save_imagenet_result(x, y, info, samples_root, suffix=""):
+        
+    if len(x.shape) == 3:
+        n=1
+    else:
+        n = x.size(0)
+        
+    for i in range(n):
+        #print('info["class_id"][i]', info["class_id"][i])
+        class_dir = os.path.join(samples_root, info["class_id"][i])
+        #print('class_dir', class_dir)
+        os.makedirs(class_dir, exist_ok=True)
+    for i in range(n):
+        if len(suffix) > 0:
+            tvu.save_image(x[i], os.path.join(samples_root, info["class_id"][i], f'{info["name"][i]}_{suffix}.png'))
+        else:
+            tvu.save_image(x[i], os.path.join(samples_root, info["class_id"][i], f'{info["name"][i]}.png'))
 
 
 def inverse_data_transform(x_, rescale=True):
@@ -160,6 +179,8 @@ def calculate_total_psnr(
         # First ensure all images in roughly [0, 1] instead of [-1, 1] for the PSNR function
         sample_01 = inverse_data_transform(sample, rescale=val_kwargs["rescale_image"])
         x_01 = inverse_data_transform(x, rescale=val_kwargs["rescale_image"])
+        y_01 = inverse_data_transform(y, rescale=val_kwargs["rescale_image"])
+
         print("RANGE:", sample_01.min(), sample_01.max(), x_01.min(), x_01.max())
         mse = torch.mean(
             (sample_01 - x_01) ** 2, dim=(1, 2, 3)
@@ -188,6 +209,11 @@ def calculate_total_psnr(
         else:
             # dont use LPIPS if we have grayscale images
             lpips_.append(0)
+
+
+        save_imagenet_result(sample_01, None, info, save_path, "")
+        save_imagenet_result(x_01, None, info, save_path, "deg")
+        save_imagenet_result(y_01, None, info, save_path, "ori")
 
         if save_images:
             for k in range(sample.shape[0]):
