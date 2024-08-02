@@ -154,8 +154,8 @@ def set_task_configs(config, task_name, model_trained_on, dname):
 
         config.dataset = dataset = ml_collections.ConfigDict()
         dataset.name = dname
-        dataset.root = "/home/alexdenker/ImageNet" # should a "val" subfolder
-        dataset.meta_root = "_data"
+        dataset.root = "/home/alexdenker/ImageNet"
+        dataset.meta_root = "datasets/data"
         dataset.subset_txt = (
             "datasets/data/imagenet_10k.txt"
         )
