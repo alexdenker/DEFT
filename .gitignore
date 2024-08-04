@@ -7,7 +7,7 @@ dist/
 !_configs/dist/
 wandb/
 finetuning/
-
+benchmark/
 src/
 
 # Byte-compiled / optimized / DLL files
