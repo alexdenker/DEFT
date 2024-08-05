@@ -3,37 +3,47 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torchvision.utils as tvu
 from omegaconf import OmegaConf
 from skimage.metrics import peak_signal_noise_ratio
 from torchmetrics.functional import structural_similarity_index_measure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from tqdm import tqdm
-import torchvision.utils as tvu 
 
 import wandb
 from algos.ddim import DDIM
-from htransform.likelihoods import InPainting, get_xi_condition
+from htransform.likelihoods import InPainting
 from models.classifier_guidance_model import ClassifierGuidanceModel
 from models.diffusion import Diffusion
 from models.utils import get_timesteps
 
+
 def save_imagenet_result(x, y, info, samples_root, suffix=""):
-        
     if len(x.shape) == 3:
-        n=1
+        n = 1
     else:
         n = x.size(0)
-        
+
     for i in range(n):
-        #print('info["class_id"][i]', info["class_id"][i])
+        # print('info["class_id"][i]', info["class_id"][i])
         class_dir = os.path.join(samples_root, info["class_id"][i])
-        #print('class_dir', class_dir)
+        # print('class_dir', class_dir)
         os.makedirs(class_dir, exist_ok=True)
     for i in range(n):
         if len(suffix) > 0:
-            tvu.save_image(x[i], os.path.join(samples_root, info["class_id"][i], f'{info["name"][i]}_{suffix}.png'))
+            tvu.save_image(
+                x[i],
+                os.path.join(
+                    samples_root, info["class_id"][i], f'{info["name"][i]}_{suffix}.png'
+                ),
+            )
         else:
-            tvu.save_image(x[i], os.path.join(samples_root, info["class_id"][i], f'{info["name"][i]}.png'))
+            tvu.save_image(
+                x[i],
+                os.path.join(
+                    samples_root, info["class_id"][i], f'{info["name"][i]}.png'
+                ),
+            )
 
 
 def inverse_data_transform(x_, rescale=True):
@@ -43,6 +53,7 @@ def inverse_data_transform(x_, rescale=True):
         x_ = (x_ + 1.0) / 2.0
 
     return x_
+
 
 def correct_color_channels(x_, x_ref_):
     for c in range(x_.shape[0]):
@@ -158,10 +169,9 @@ def calculate_total_psnr(
 
         @torch.no_grad()
         def combined_model(x, t):
-
             control = control_net(x, t, cond)
-            eps = pretrained_score(x, t,control=control)
-            
+            eps = pretrained_score(x, t, control=control)
+
             return eps
 
         guidance_model = ClassifierGuidanceModel(
@@ -210,34 +220,32 @@ def calculate_total_psnr(
             # dont use LPIPS if we have grayscale images
             lpips_.append(0)
 
-
         save_imagenet_result(sample_01, None, info, save_path, "")
-        save_imagenet_result(x_01, None, info, save_path, "deg")
-        save_imagenet_result(y_01, None, info, save_path, "ori")
+        save_imagenet_result(x_01, None, info, save_path, "ori")
+        save_imagenet_result(y_01, None, info, save_path, "deg")
 
         if save_images:
             for k in range(sample.shape[0]):
-
                 import matplotlib.pyplot as plt
 
                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
                 if x_01.shape[1] == 3:
-                    ax1.imshow(x_01[0, :, :, :].permute(1,2,0).cpu().numpy())
+                    ax1.imshow(x_01[0, :, :, :].permute(1, 2, 0).cpu().numpy())
                     ax2.imshow(
-                    sample_01[0, :, :, :].permute(1,2,0).cpu().numpy(),
-                    vmin=x_01.cpu().numpy().min(),
-                    vmax=x_01.cpu().numpy().max(),
+                        sample_01[0, :, :, :].permute(1, 2, 0).cpu().numpy(),
+                        vmin=x_01.cpu().numpy().min(),
+                        vmax=x_01.cpu().numpy().max(),
                     )
                 else:
                     ax1.imshow(x_01.cpu().numpy()[0, 0, :, :], cmap="gray")
                     ax2.imshow(
-                    sample_01.cpu().numpy()[0, 0, :, :],
-                    cmap="gray",
-                    vmin=x_01.cpu().numpy().min(),
-                    vmax=x_01.cpu().numpy().max(),
+                        sample_01.cpu().numpy()[0, 0, :, :],
+                        cmap="gray",
+                        vmin=x_01.cpu().numpy().min(),
+                        vmax=x_01.cpu().numpy().max(),
                     )
                 ax1.set_title("GT")
-                
+
                 ax2.set_title("Reconstruction")
                 ax1.axis("off")
                 ax2.axis("off")
@@ -258,7 +266,6 @@ def calculate_total_psnr(
 
                 img_save_idx += 1
 
-   
         print(f"PSNR: {np.mean(psnr_)}")
         print(f"PSNR (skimage): {np.mean(psnr_skimage_)}")
         print(f"SSIM: {np.mean(ssim_)}")
@@ -267,8 +274,6 @@ def calculate_total_psnr(
         wandb.log({"val/running_psnr_skimage": np.mean(psnr_skimage_)})
         wandb.log({"val/running_lpips": np.mean(lpips_)})
         wandb.log({"val/running_ssim": np.mean(ssim_)})
-
-        
 
     wandb.log({"val/total_psnr": np.mean(psnr_)})
     wandb.log({"val/total_psnr_skimage": np.mean(psnr_skimage_)})
