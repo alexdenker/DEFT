@@ -66,9 +66,9 @@ class ImageNet(torchvision.datasets.ImageFolder):
         #     root = os.path.join(root, "imagenet")
         root = self.root = os.path.expanduser(root)
         meta_root = self.meta_root = os.path.expanduser(meta_root)
-        self.split = verify_str_arg(split, "split", ("train", "val", "custom"))
+        self.split = verify_str_arg(split, "split", ("train", "val", "custom", "imagenet-o"))
         # self.parse_archives()
-
+        print(self.split_folder)
         try:
             wnid_to_classes = load_meta_file(self.root)[0]
         except Exception:
@@ -171,7 +171,7 @@ class ImageNet(torchvision.datasets.ImageFolder):
 
     @property
     def split_folder(self) -> str:
-        if self.split == "train" or self.split == "val":
+        if self.split == "train" or self.split == "val" or self.split == "imagenet-o":
             return os.path.join(self.root, self.split)
         else:
             return self.root
