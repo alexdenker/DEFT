@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from omegaconf import DictConfig
+from tqdm import tqdm
 
 from models.classifier_guidance_model import ClassifierGuidanceModel
 from utils.degredations import build_degredation_model
@@ -55,7 +56,7 @@ class REDDIFF(DDIM):
         )  # original: 0.999
         # optimizer = torch.optim.SGD([mu], lr=1e6, momentum=0.9)  #momentum=0.9
 
-        for ti, si in zip(reversed(ts), reversed(ss)):
+        for ti, si in tqdm(zip(reversed(ts), reversed(ss))):
             t = torch.ones(n).to(x.device).long() * ti
             s = torch.ones(n).to(x.device).long() * si
             alpha_t = self.diffusion.alpha(t).view(-1, 1, 1, 1)
