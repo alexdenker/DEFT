@@ -3,7 +3,7 @@
 #local machine
 root: "outputs"
 save_evolution: False
-ckpt_root: "ckpts"
+ckpt_root: "pretrained_model"
 samples_root: "samples"
 overwrite: True
 num_steps: 50
@@ -15,3 +15,4 @@ save_ori: False
 save_deg: False
 seed: 1
 name: ???
+

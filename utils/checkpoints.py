@@ -33,7 +33,7 @@ CKPT_MAP = {
     "ema_lsun_cat": "ema_diffusion_lsun_cat_model/model-1761000.ckpt",
     "lsun_church": "diffusion_lsun_church_model/model-4432000.ckpt",
     "ema_lsun_church": "ema_diffusion_lsun_church_model/model-4432000.ckpt",
-    "imagenet_256_uncond": "imagenet/256x256_diffusion_uncond.pt",
+    "imagenet_256_uncond": "256x256_diffusion_uncond.pt",
     "imagenet_256_cond": "imagenet/256x256_diffusion.pt",
     "imagenet_256_classifier": "imagenet/256x256_classifier.pt",
     "imagenet_512_classifier": "imagenet/512x512_classifier.pt",
@@ -98,7 +98,7 @@ def get_ckpt_path(name, root=None, check=False, prefix="exp"):
 def ckpt_path_adm(name, cfg):
     logger = get_logger("ckpt", cfg)
 
-    ckpt_root = os.path.join(cfg.exp.root, cfg.exp.ckpt_root)
+    ckpt_root = cfg.exp.ckpt_root
     ckpt = os.path.join(ckpt_root, CKPT_MAP[name])
     if not os.path.exists(ckpt):
         logger.info(URL_MAP[name])

@@ -7,4 +7,4 @@ image_size: 256
 channels: 3
 meta_root: "datasets/data"
 transform: "diffusion"
-subset_txt:"datasets/data/imagenet_1k_val.txt"  
+subset_txt: "datasets/data/imagenet_1k_val.txt"  
