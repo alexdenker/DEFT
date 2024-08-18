@@ -1,4 +1,5 @@
 import os
+
 import torch.distributed as dist
 from torch.utils.data import Dataset
 
@@ -49,7 +50,7 @@ def build_one_dataset(cfg, dataset_attr="dataset"):
 
 
 def build_loader(cfg, dataset_attr="dataset"):
-    if type(dataset_attr) == list:
+    if isinstance(dataset_attr, list):
         dsets = []
         for da in dataset_attr:
             cfg_dataset = getattr(cfg, da)

@@ -5,10 +5,9 @@ This loss function works with the sde defined in models/diffusion.py
 
 import torch
 
-from models.guided_diffusion.unet_cond import CondUNetModel
+from htransform.likelihoods import InPainting, Likelihood, get_xi_condition
 from models.diffusion import Diffusion
-
-from htransform.likelihoods import Likelihood, InPainting, get_xi_condition
+from models.guided_diffusion.unet_cond import CondUNetModel
 
 
 def epsilon_based_loss_fn_finetuning(

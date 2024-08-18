@@ -4,10 +4,10 @@ import traceback
 
 import numpy as np
 import torch
-import torch.multiprocessing as mp
 import torch.distributed as dist
+import torch.multiprocessing as mp
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf
-# from hydra.core.hydra_config import HydraConfig
 
 
 def init_processes(rank, size, fn, cfg, cwd):

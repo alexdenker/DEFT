@@ -1,15 +1,8 @@
-import math
-from abc import abstractmethod
-
-import numpy as np
 import torch as th
 import torch.nn as nn
-import torch.nn.functional as F
 
 from .fp16_util import convert_module_to_f16, convert_module_to_f32
 from .nn import (
-    avg_pool_nd,
-    checkpoint,
     conv_nd,
     linear,
     normalization,
@@ -18,16 +11,11 @@ from .nn import (
 )
 
 from .unet import (
-    AttentionPool2d,
-    TimestepBlock,
     TimestepEmbedSequential,
     Upsample,
     Downsample,
     ResBlock,
     AttentionBlock,
-    count_flops_attn,
-    QKVAttentionLegacy,
-    QKVAttention,
 )
 
 

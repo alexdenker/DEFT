@@ -1,10 +1,8 @@
 import argparse
+from collections.abc import MutableMapping
 
 from models.guided_diffusion.unet import UNetModel
 from models.guided_diffusion.unet_cond import CondUNetModel
-
-import argparse
-from collections.abc import MutableMapping
 
 
 def dict2namespace(config):

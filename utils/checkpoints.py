@@ -1,13 +1,12 @@
-import os
 import hashlib
-import requests
-from tqdm import tqdm
-import gdown
+import os
 
+import gdown
+import requests
 import torch.distributed as dist
+from tqdm import tqdm
 
 from .distributed import get_logger
-
 
 URL_MAP = {
     "cifar10": "https://heibox.uni-heidelberg.de/f/869980b53bf5416c8a28/?dl=1",

@@ -1,13 +1,13 @@
-from PIL import Image
+import io
 import os
 import os.path
-import io
-from collections.abc import Iterable
 import pickle
-from torchvision.datasets.utils import verify_str_arg, iterable_to_str
+from collections.abc import Iterable
 
 import torchvision.transforms as transforms
+from PIL import Image
 from torchvision.datasets import VisionDataset
+from torchvision.datasets.utils import iterable_to_str, verify_str_arg
 
 
 class LSUNClass(VisionDataset):

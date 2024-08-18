@@ -3,8 +3,8 @@ from: https://github.com/deepinv/deepinv/blob/main/deepinv/physics/functional/ra
 """
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 if torch.__version__ > "1.2.0":
     affine_grid = lambda theta, size: F.affine_grid(theta, size, align_corners=True)

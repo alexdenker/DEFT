@@ -4,9 +4,8 @@ adapted from https://github.com/deepinv/deepinv/blob/main/deepinv/physics/tomogr
 """
 
 import torch
-from torch import nn
 
-from radon.functional import Radon, IRadon
+from radon.functional import IRadon, Radon
 
 
 class Tomography:

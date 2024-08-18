@@ -21,20 +21,19 @@ rather cheaper approximations to facilitate faster training/sampling.
 
 
 import io
+import math
 from pathlib import Path
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from torch.nn import functional as F
 
+from radon.tomography import Tomography
 from utils.degredations import HDR as HDR_old
 from utils.degredations import NonlinearBlurOperator as NLB
 from utils.degredations import PhaseRetrievalOperator as PR
 from utils.degredations import SuperResolution as SR
 from utils.fft_utils import fft2_m, ifft2_m
-
-from radon.tomography import Tomography
 
 
 def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
@@ -119,7 +118,8 @@ class Likelihood:
     def _sample(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
-    def sample(self, x: torch.Tensor) -> torch.Tensor:
+    # TODO: What is this here, why are we redefining it?
+    def sample(self, x: torch.Tensor) -> torch.Tensor:  # noqa: F811
         samples = []
         for k in range(x.shape[0]):
             e = self._sample(x[[k]])
@@ -380,9 +380,6 @@ class PhaseRetrieval(Likelihood):
             - 1.0
         )
         return xi
-
-
-import math
 
 
 class Radon(Likelihood):

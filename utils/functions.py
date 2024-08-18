@@ -7,7 +7,7 @@ def sigmoid(x):
 
 
 def postprocess(x):
-    if type(x) == list:
+    if isinstance(x, list):
         return [(v + 1) / 2 for v in x]
     else:
         return (x + 1) / 2

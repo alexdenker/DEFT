@@ -1,11 +1,11 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved
 
 import torch
-import torch.nn.functional as F
 from omegaconf import DictConfig
 
 from models.classifier_guidance_model import ClassifierGuidanceModel
 from utils.degredations import build_degredation_model
+
 from .ddim import DDIM
 
 

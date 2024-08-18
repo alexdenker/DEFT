@@ -1,28 +1,17 @@
 import os
 
 import hydra
-import numpy as np
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
-import torch.nn.functional as F
-from cleanfid.features import build_feature_extractor
 from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig, OmegaConf
-from PIL import Image
-
-from torchvision.transforms import Compose, ToTensor
-from tqdm import tqdm
+from omegaconf import DictConfig
 from torch.nn.parallel import DistributedDataParallel as DDP
+from tqdm import tqdm
+
 from datasets import build_loader
-import torchvision.transforms as transforms
-from utils.distributed import get_logger, init_processes, get_results_file
-
+from utils.distributed import get_logger, get_results_file, init_processes
 from utils.functions import accuracy
-
-
-import sys
-import torchvision
 
 # print(sys.version)
 # print(torch.__version__)

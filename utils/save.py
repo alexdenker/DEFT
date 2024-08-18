@@ -1,9 +1,10 @@
 import os
+
 import lmdb
 import numpy as np
 import torch
-import torchvision.utils as tvu
 import torch.distributed as dist
+import torchvision.utils as tvu
 
 
 def save_imagenet_result(x, y, info, samples_root, suffix=""):

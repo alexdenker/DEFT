@@ -1,12 +1,10 @@
-import os
-
 import hydra
 import numpy as np
 from cleanfid.fid import frechet_distance, kernel_distance
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
-import torch.distributed as dist
-from utils.distributed import get_logger, init_processes, get_results_file
+
+from utils.distributed import get_logger, get_results_file, init_processes
 
 
 def main(cfg: DictConfig):

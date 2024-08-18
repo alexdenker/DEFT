@@ -7,20 +7,17 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 import torch.nn.functional as F
+from cleanfid.fid import get_batch_features
+from cleanfid.inception_pytorch import InceptionV3
+from cleanfid.inception_torchscript import InceptionV3W
 from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from PIL import Image
 from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
 
 from datasets import build_loader
 from utils.distributed import get_logger, init_processes
-
-from cleanfid.fid import get_batch_features
-from cleanfid.downloads_helper import check_download_url
-from cleanfid.inception_pytorch import InceptionV3
-from cleanfid.inception_torchscript import InceptionV3W
-
 
 """
 returns a functions that takes an image in range [0,255]
@@ -226,7 +223,7 @@ def main(cfg: DictConfig):
 
     device = torch.device(f"cuda:{dist.get_rank()}")
 
-    if cfg.mean_std_stats == False:
+    if cfg.mean_std_stats is False:
         if "/" in cfg.save_path:
             save_dir = "/".join(cfg.save_path.split("/")[:-1])
             save_dir = os.path.join(fid_root, save_dir)
@@ -243,7 +240,7 @@ def main(cfg: DictConfig):
         logger.info(f"Stats already exists for file {save_path}.")
         return
 
-    if cfg.mean_std_stats == False:
+    if cfg.mean_std_stats is False:
         logger.info("No mean/std stats. Memory inefficient but can be used for KID.")
         features = get_loader_features(
             loader, device=device, mode=cfg.fid.mode, verbose=(dist.get_rank() == 0)

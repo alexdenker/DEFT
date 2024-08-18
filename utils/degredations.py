@@ -928,7 +928,7 @@ def get_degreadation_image(y_0, H, cfg):
 
 # nonlinear operators
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod  # noqa: E402
 
 
 class NonLinearOperator(ABC):
@@ -1068,7 +1068,7 @@ class NonlinearBlurOperator(NonLinearOperator, H_functions):
         return self.H(x)
 
 
-from utils.fft_utils import fft2_m, ifft2_m
+from utils.fft_utils import fft2_m, ifft2_m  # noqa: E402
 
 
 # @register_operator(name='phase_retrieval')

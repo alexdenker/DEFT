@@ -2,13 +2,13 @@
 Adapted from Dival
 """
 import numpy as np
+from dival import get_standard_dataset
+from torch import Tensor
+from torch.nn.functional import interpolate
+from torch.utils.data import DataLoader
 
 np.object = object
 
-from torch import Tensor
-from torch.utils.data import DataLoader
-from dival import get_standard_dataset
-from torch.nn.functional import interpolate
 
 np.int = np.int64
 

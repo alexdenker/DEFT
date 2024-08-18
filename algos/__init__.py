@@ -2,12 +2,12 @@
 
 from .ddim import DDIM
 from .ddrm import DDRM
-from .pgdm import PGDM
+from .dps import DPS
 from .identity import Identity
+from .mcg import MCG
+from .pgdm import PGDM
 from .reddiff import REDDIFF
 from .reddiff_parallel import REDDIFF_PARALLEL
-from .mcg import MCG
-from .dps import DPS
 from .sds import SDS
 from .sds_var import SDS_VAR
 

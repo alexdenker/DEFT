@@ -4,11 +4,13 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
-from tqdm import tqdm
 from torchmetrics.functional import (
     structural_similarity_index_measure,
-)  # StructuralSimilarityIndexMeasure
+)
+
+# StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
+from tqdm import tqdm
 
 from datasets import build_loader
 from utils.distributed import get_logger, get_results_file, init_processes

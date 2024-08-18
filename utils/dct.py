@@ -179,7 +179,7 @@ class LinearDCT(nn.Linear):
 
     def reset_parameters(self):
         # initialise using dct function
-        I = torch.eye(self.N)
+        I = torch.eye(self.N)  # noqa: E741
         if self.type == "dct1":
             self.weight.data = dct1(I).data.t()
         elif self.type == "idct1":
