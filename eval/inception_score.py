@@ -29,17 +29,19 @@ def main(cfg: DictConfig):
     loader = build_loader(cfg)
 
     dset = InceptionDataset(loader.dataset)
-    metrics = torch_fidelity.calculate_metrics(input1=dset, cuda=True, isc=True, verbose=True, samples_find_deep=True)
-    isc_mean = metrics['inception_score_mean']
-    isc_std = metrics['inception_score_std']
+    metrics = torch_fidelity.calculate_metrics(
+        input1=dset, cuda=True, isc=True, verbose=True, samples_find_deep=True
+    )
+    isc_mean = metrics["inception_score_mean"]
+    isc_std = metrics["inception_score_std"]
 
     if dist.get_rank() == 0:
         results_file = get_results_file(cfg, logger)
         logger.info(f"IS: {isc_mean} +/- {isc_std}")
 
-        with open(results_file, 'a') as f:
-            f.write(f'IS_mean: {isc_mean}')
-            f.write(f'IS_std: {isc_std}')
+        with open(results_file, "a") as f:
+            f.write(f"IS_mean: {isc_mean}")
+            f.write(f"IS_std: {isc_std}")
 
     dist.barrier()
 
@@ -58,7 +60,10 @@ def main_dist(cfg: DictConfig):
         num_process_per_node = cfg.dist.num_processes_per_node
         world_size = num_proc_node * num_process_per_node
         mp.spawn(
-            init_processes, args=(world_size, main, cfg, cwd), nprocs=world_size, join=True,
+            init_processes,
+            args=(world_size, main, cfg, cwd),
+            nprocs=world_size,
+            join=True,
         )
     else:
         init_processes(0, size, main, cfg, cwd)

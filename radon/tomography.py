@@ -9,7 +9,7 @@ from torch import nn
 from radon.functional import Radon, IRadon
 
 
-class Tomography():
+class Tomography:
     r"""
     (Computed) Tomography operator.
 

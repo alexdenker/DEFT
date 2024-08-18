@@ -1,8 +1,8 @@
 import argparse
 import inspect
 
-#from . import gaussian_diffusion as gd
-#from .respace import SpacedDiffusion, space_timesteps
+# from . import gaussian_diffusion as gd
+# from .respace import SpacedDiffusion, space_timesteps
 from .unet import SuperResModel, UNetModel, EncoderUNetModel
 
 NUM_CLASSES = 1000
@@ -144,7 +144,7 @@ def create_model(
     resblock_updown=False,
     use_fp16=False,
     use_new_attention_order=False,
-    **kwargs
+    **kwargs,
 ):
     if channel_mult == "":
         if image_size == 512:
@@ -235,7 +235,7 @@ def create_classifier(
     classifier_use_scale_shift_norm=True,
     classifier_resblock_updown=True,
     classifier_pool="attention",
-    **kwargs
+    **kwargs,
 ):
     if image_size == 512:
         channel_mult = (0.5, 1, 1, 2, 2, 4, 4)

@@ -5,7 +5,9 @@ import torch.multiprocessing as mp
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 from tqdm import tqdm
-from torchmetrics.functional import structural_similarity_index_measure     #StructuralSimilarityIndexMeasure
+from torchmetrics.functional import (
+    structural_similarity_index_measure,
+)  # StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 from datasets import build_loader
@@ -32,7 +34,6 @@ def main(cfg: DictConfig):
         ssims.append(ssim)
         lpips.append(lpip.item())
 
-    
     psnrs = torch.cat(psnrs, dim=0)
     ssims = torch.cat(ssims, dim=0)
     lpips = torch.tensor(lpips).cuda()
@@ -53,9 +54,9 @@ def main(cfg: DictConfig):
         logger.info(f"SSIM: {ssims.mean().item()}")
         logger.info(f"LPIPS: {lpips.mean().item()}")
 
-        with open(results_file, 'a') as f:
-            f.write(f'PSNR: {psnrs.mean().item()}\n')
-            f.write(f'SSIM: {ssims.mean().item()}\n')
+        with open(results_file, "a") as f:
+            f.write(f"PSNR: {psnrs.mean().item()}\n")
+            f.write(f"SSIM: {ssims.mean().item()}\n")
             f.write(f"LPIPS: {lpips.mean().item()}")
 
     dist.barrier()
@@ -64,9 +65,9 @@ def main(cfg: DictConfig):
 @hydra.main(version_base="1.2", config_path="_configs", config_name="psnr")
 def main_dist(cfg: DictConfig):
     cwd = HydraConfig.get().runtime.output_dir
-    
-    #print('cfg', cfg)
-    #import pdb; pdb.set_trace()
+
+    # print('cfg', cfg)
+    # import pdb; pdb.set_trace()
 
     if cfg.dist.num_processes_per_node < 0:
         size = torch.cuda.device_count()
@@ -78,11 +79,13 @@ def main_dist(cfg: DictConfig):
         num_process_per_node = cfg.dist.num_processes_per_node
         world_size = num_proc_node * num_process_per_node
         mp.spawn(
-            init_processes, args=(world_size, main, cfg, cwd), nprocs=world_size, join=True,
+            init_processes,
+            args=(world_size, main, cfg, cwd),
+            nprocs=world_size,
+            join=True,
         )
     else:
         init_processes(0, size, main, cfg, cwd)
-        
 
 
 if __name__ == "__main__":

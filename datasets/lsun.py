@@ -25,6 +25,7 @@ class LSUNClass(VisionDataset):
             root, transform=transform, target_transform=target_transform
         )
         import lmdb
+
         self.env = lmdb.open(
             root,
             max_readers=1,
@@ -45,7 +46,7 @@ class LSUNClass(VisionDataset):
             pickle.dump(self.keys, open(cache_file, "wb"))
 
     def __getitem__(self, index):
-        if not hasattr(self, 'txn'):
+        if not hasattr(self, "txn"):
             self.open_lmdb()
         img, target = None, None
         env = self.env
@@ -91,7 +92,7 @@ class LSUN(VisionDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.classes = classes
-    
+
     def open_lmdb(self):
         root = self.root
         transform = self.transform
@@ -172,7 +173,7 @@ class LSUN(VisionDataset):
         Returns:
             tuple: Tuple (image, target) where target is the index of the target category.
         """
-        if not hasattr(self, 'txn'):
+        if not hasattr(self, "txn"):
             self.open_lmdb()
         target = 0
         sub = 0
@@ -192,22 +193,27 @@ class LSUN(VisionDataset):
         return img, target, dict(index=index)
 
     def __len__(self):
-        if hasattr(self, 'length'):
+        if hasattr(self, "length"):
             return self.length
-        
+
         classes_to_length = dict(
             bedroom_train=3033042,
             bedroom_val=300,
             church_outdoor_train=126227,
-            church_outdoor_val=300
+            church_outdoor_val=300,
         )
-        
+
         return sum([classes_to_length[k] for k in self.classes])
 
     def extra_repr(self):
         return "Classes: {classes}".format(**self.__dict__)
 
 
-if __name__ == '__main__':
-    dset = LSUN('/atlas/u/tsong/data/lsun', classes=['church_outdoor_val'], transform=transforms.Compose([transforms.Resize(256), transforms.CenterCrop(256), transforms.ToTensor()]))
-    
+if __name__ == "__main__":
+    dset = LSUN(
+        "/atlas/u/tsong/data/lsun",
+        classes=["church_outdoor_val"],
+        transform=transforms.Compose(
+            [transforms.Resize(256), transforms.CenterCrop(256), transforms.ToTensor()]
+        ),
+    )

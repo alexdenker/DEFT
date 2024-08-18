@@ -48,7 +48,7 @@ class HumanOutputFormat(KVWriter, SeqWriter):
     def writekvs(self, kvs):
         # Create strings for printing
         key2str = {}
-        for (key, val) in sorted(kvs.items()):
+        for key, val in sorted(kvs.items()):
             if hasattr(val, "__float__"):
                 valstr = "%-8.3g" % val
             else:
@@ -66,7 +66,7 @@ class HumanOutputFormat(KVWriter, SeqWriter):
         # Write out the data
         dashes = "-" * (keywidth + valwidth + 7)
         lines = [dashes]
-        for (key, val) in sorted(key2str.items(), key=lambda kv: kv[0].lower()):
+        for key, val in sorted(key2str.items(), key=lambda kv: kv[0].lower()):
             lines.append(
                 "| %s%s | %s%s |"
                 % (key, " " * (keywidth - len(key)), val, " " * (valwidth - len(val)))
@@ -83,7 +83,7 @@ class HumanOutputFormat(KVWriter, SeqWriter):
 
     def writeseq(self, seq):
         seq = list(seq)
-        for (i, elem) in enumerate(seq):
+        for i, elem in enumerate(seq):
             self.file.write(elem)
             if i < len(seq) - 1:  # add space unless this is the last one
                 self.file.write(" ")
@@ -125,7 +125,7 @@ class CSVOutputFormat(KVWriter):
             self.file.seek(0)
             lines = self.file.readlines()
             self.file.seek(0)
-            for (i, k) in enumerate(self.keys):
+            for i, k in enumerate(self.keys):
                 if i > 0:
                     self.file.write(",")
                 self.file.write(k)
@@ -134,7 +134,7 @@ class CSVOutputFormat(KVWriter):
                 self.file.write(line[:-1])
                 self.file.write(self.sep * len(extra_keys))
                 self.file.write("\n")
-        for (i, k) in enumerate(self.keys):
+        for i, k in enumerate(self.keys):
             if i > 0:
                 self.file.write(",")
             v = kvs.get(k)
@@ -229,7 +229,7 @@ def logkvs(d):
     """
     Log a dictionary of key-value pairs
     """
-    for (k, v) in d.items():
+    for k, v in d.items():
         logkv(k, v)
 
 
@@ -421,7 +421,7 @@ def mpi_weighted_mean(comm, local_name2valcount):
         name2sum = defaultdict(float)
         name2count = defaultdict(float)
         for n2vc in all_name2valcount:
-            for (name, (val, count)) in n2vc.items():
+            for name, (val, count) in n2vc.items():
                 try:
                     val = float(val)
                 except ValueError:
@@ -492,4 +492,3 @@ def scoped_configure(dir=None, format_strs=None, comm=None):
     finally:
         Logger.CURRENT.close()
         Logger.CURRENT = prevlogger
-

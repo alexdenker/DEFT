@@ -11,7 +11,15 @@ import torch.nn.functional as F
 class MyLinear(nn.Module):
     """Linear layer with equalized learning rate and custom learning rate multiplier."""
 
-    def __init__(self, input_size, output_size, gain=2 ** (0.5), use_wscale=False, lrmul=1, bias=True):
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        gain=2 ** (0.5),
+        use_wscale=False,
+        lrmul=1,
+        bias=True,
+    ):
         super().__init__()
         he_std = gain * input_size ** (-0.5)  # He init
         # Equalized learning rate and custom learning rate multiplier.
@@ -21,7 +29,9 @@ class MyLinear(nn.Module):
         else:
             init_std = he_std / lrmul
             self.w_mul = lrmul
-        self.weight = torch.nn.Parameter(torch.randn(output_size, input_size) * init_std)
+        self.weight = torch.nn.Parameter(
+            torch.randn(output_size, input_size) * init_std
+        )
         if bias:
             self.bias = torch.nn.Parameter(torch.zeros(output_size))
             self.b_mul = lrmul
@@ -55,7 +65,7 @@ class MyConv2d(nn.Module):
             self.upscale = Upscale2d()
         else:
             self.upscale = None
-        he_std = gain * (input_channels * kernel_size ** 2) ** (-0.5)  # He init
+        he_std = gain * (input_channels * kernel_size**2) ** (-0.5)  # He init
         self.kernel_size = kernel_size
         if use_wscale:
             init_std = 1.0 / lrmul
@@ -64,7 +74,8 @@ class MyConv2d(nn.Module):
             init_std = he_std / lrmul
             self.w_mul = lrmul
         self.weight = torch.nn.Parameter(
-            torch.randn(output_channels, input_channels, kernel_size, kernel_size) * init_std
+            torch.randn(output_channels, input_channels, kernel_size, kernel_size)
+            * init_std
         )
         if bias:
             self.bias = torch.nn.Parameter(torch.zeros(output_channels))
@@ -86,16 +97,25 @@ class MyConv2d(nn.Module):
             w = w.permute(1, 0, 2, 3)
             # probably applying a conv on w would be more efficient. also this quadruples the weight (average)?!
             w = F.pad(w, (1, 1, 1, 1))
-            w = w[:, :, 1:, 1:] + w[:, :, :-1, 1:] + w[:, :, 1:, :-1] + w[:, :, :-1, :-1]
+            w = (
+                w[:, :, 1:, 1:]
+                + w[:, :, :-1, 1:]
+                + w[:, :, 1:, :-1]
+                + w[:, :, :-1, :-1]
+            )
             x = F.conv_transpose2d(x, w, stride=2, padding=int((w.size(-1) - 1) // 2))
             have_convolution = True
         elif self.upscale is not None:
             x = self.upscale(x)
 
         if not have_convolution and self.intermediate is None:
-            return F.conv2d(x, self.weight * self.w_mul, bias, padding=int(self.kernel_size // 2))
+            return F.conv2d(
+                x, self.weight * self.w_mul, bias, padding=int(self.kernel_size // 2)
+            )
         elif not have_convolution:
-            x = F.conv2d(x, self.weight * self.w_mul, None, padding=int(self.kernel_size // 2))
+            x = F.conv2d(
+                x, self.weight * self.w_mul, None, padding=int(self.kernel_size // 2)
+            )
 
         if self.intermediate is not None:
             x = self.intermediate(x)
@@ -114,7 +134,9 @@ class NoiseLayer(nn.Module):
 
     def forward(self, x, noise=None):
         if noise is None and self.noise is None:
-            noise = torch.randn(x.size(0), 1, x.size(2), x.size(3), device=x.device, dtype=x.dtype)
+            noise = torch.randn(
+                x.size(0), 1, x.size(2), x.size(3), device=x.device, dtype=x.dtype
+            )
         elif noise is None:
             # here is a little trick: if you get all the noiselayers and set each
             # modules .noise attribute, you can have pre-defined noise.
@@ -143,7 +165,7 @@ class PixelNormLayer(nn.Module):
         self.epsilon = epsilon
 
     def forward(self, x):
-        return x * torch.rsqrt(torch.mean(x ** 2, dim=1, keepdim=True) + self.epsilon)
+        return x * torch.rsqrt(torch.mean(x**2, dim=1, keepdim=True) + self.epsilon)
 
 
 class BlurLayer(nn.Module):
@@ -163,7 +185,13 @@ class BlurLayer(nn.Module):
     def forward(self, x):
         # expand kernel channels
         kernel = self.kernel.expand(x.size(1), -1, -1, -1)
-        x = F.conv2d(x, kernel, stride=self.stride, padding=int((self.kernel.size(2) - 1) / 2), groups=x.size(1))
+        x = F.conv2d(
+            x,
+            kernel,
+            stride=self.stride,
+            padding=int((self.kernel.size(2) - 1) / 2),
+            groups=x.size(1),
+        )
         return x
 
 
@@ -173,8 +201,12 @@ def upscale2d(x, factor=2, gain=1):
         x = x * gain
     if factor != 1:
         shape = x.shape
-        x = x.view(shape[0], shape[1], shape[2], 1, shape[3], 1).expand(-1, -1, -1, factor, -1, factor)
-        x = x.contiguous().view(shape[0], shape[1], factor * shape[2], factor * shape[3])
+        x = x.view(shape[0], shape[1], shape[2], 1, shape[3], 1).expand(
+            -1, -1, -1, factor, -1, factor
+        )
+        x = x.contiguous().view(
+            shape[0], shape[1], factor * shape[2], factor * shape[3]
+        )
     return x
 
 
@@ -191,26 +223,51 @@ class Upscale2d(nn.Module):
 
 class G_mapping(nn.Sequential):
     def __init__(self, nonlinearity="lrelu", use_wscale=True):
-        act, gain = {"relu": (torch.relu, np.sqrt(2)), "lrelu": (nn.LeakyReLU(negative_slope=0.2), np.sqrt(2))}[
-            nonlinearity
-        ]
+        act, gain = {
+            "relu": (torch.relu, np.sqrt(2)),
+            "lrelu": (nn.LeakyReLU(negative_slope=0.2), np.sqrt(2)),
+        }[nonlinearity]
         layers = [
             ("pixel_norm", PixelNormLayer()),
-            ("dense0", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense0",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense0_act", act),
-            ("dense1", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense1",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense1_act", act),
-            ("dense2", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense2",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense2_act", act),
-            ("dense3", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense3",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense3_act", act),
-            ("dense4", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense4",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense4_act", act),
-            ("dense5", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense5",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense5_act", act),
-            ("dense6", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense6",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense6_act", act),
-            ("dense7", MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale)),
+            (
+                "dense7",
+                MyLinear(512, 512, gain=gain, lrmul=0.01, use_wscale=use_wscale),
+            ),
             ("dense7_act", act),
         ]
         super().__init__(OrderedDict(layers))
@@ -300,13 +357,29 @@ class InputBlock(nn.Module):
             self.bias = nn.Parameter(torch.ones(nf))
         else:
             # tweak gain to match the official implementation of Progressing GAN
-            self.dense = MyLinear(dlatent_size, nf * 16, gain=gain / 4, use_wscale=use_wscale)
+            self.dense = MyLinear(
+                dlatent_size, nf * 16, gain=gain / 4, use_wscale=use_wscale
+            )
         self.epi1 = LayerEpilogue(
-            nf, dlatent_size, use_wscale, use_noise, use_pixel_norm, use_instance_norm, use_styles, activation_layer
+            nf,
+            dlatent_size,
+            use_wscale,
+            use_noise,
+            use_pixel_norm,
+            use_instance_norm,
+            use_styles,
+            activation_layer,
         )
         self.conv = MyConv2d(nf, nf, 3, gain=gain, use_wscale=use_wscale)
         self.epi2 = LayerEpilogue(
-            nf, dlatent_size, use_wscale, use_noise, use_pixel_norm, use_instance_norm, use_styles, activation_layer
+            nf,
+            dlatent_size,
+            use_wscale,
+            use_noise,
+            use_pixel_norm,
+            use_instance_norm,
+            use_styles,
+            activation_layer,
         )
 
     def forward(self, dlatents_in_range, noise_in_range):
@@ -344,7 +417,13 @@ class GSynthesisBlock(nn.Module):
         else:
             blur = None
         self.conv0_up = MyConv2d(
-            in_channels, out_channels, kernel_size=3, gain=gain, use_wscale=use_wscale, intermediate=blur, upscale=True
+            in_channels,
+            out_channels,
+            kernel_size=3,
+            gain=gain,
+            use_wscale=use_wscale,
+            intermediate=blur,
+            upscale=True,
         )
         self.epi1 = LayerEpilogue(
             out_channels,
@@ -356,7 +435,9 @@ class GSynthesisBlock(nn.Module):
             use_styles,
             activation_layer,
         )
-        self.conv1 = MyConv2d(out_channels, out_channels, kernel_size=3, gain=gain, use_wscale=use_wscale)
+        self.conv1 = MyConv2d(
+            out_channels, out_channels, kernel_size=3, gain=gain, use_wscale=use_wscale
+        )
         self.epi2 = LayerEpilogue(
             out_channels,
             dlatent_size,
@@ -403,7 +484,6 @@ class G_synthesis(nn.Module):
         # Low-pass filter to apply when resampling activations. None = no filtering.
         blur_filter=[1, 2, 1],
     ):
-
         super().__init__()
 
         def nf(stage):
@@ -411,15 +491,16 @@ class G_synthesis(nn.Module):
 
         self.dlatent_size = dlatent_size
         resolution_log2 = int(np.log2(resolution))
-        assert resolution == 2 ** resolution_log2 and resolution >= 4
+        assert resolution == 2**resolution_log2 and resolution >= 4
 
-        act, gain = {"relu": (torch.relu, np.sqrt(2)), "lrelu": (nn.LeakyReLU(negative_slope=0.2), np.sqrt(2))}[
-            nonlinearity
-        ]
+        act, gain = {
+            "relu": (torch.relu, np.sqrt(2)),
+            "lrelu": (nn.LeakyReLU(negative_slope=0.2), np.sqrt(2)),
+        }[nonlinearity]
         blocks = []
         for res in range(2, resolution_log2 + 1):
             channels = nf(res - 1)
-            name = "{s}x{s}".format(s=2 ** res)
+            name = "{s}x{s}".format(s=2**res)
             if res == 2:
                 blocks.append(
                     (

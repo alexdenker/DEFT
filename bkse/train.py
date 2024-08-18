@@ -29,7 +29,9 @@ def main():
     # options
     parser = argparse.ArgumentParser()
     parser.add_argument("-opt", type=str, help="Path to option YAML file.")
-    parser.add_argument("--launcher", choices=["none", "pytorch"], default="none", help="job launcher")
+    parser.add_argument(
+        "--launcher", choices=["none", "pytorch"], default="none", help="job launcher"
+    )
     parser.add_argument("--local_rank", type=int, default=0)
     args = parser.parse_args()
     opt = option.parse(args.opt, is_train=True)
@@ -50,7 +52,8 @@ def main():
         # distributed resuming: all load into default GPU
         device_id = torch.cuda.current_device()
         resume_state = torch.load(
-            opt["path"]["resume_state"], map_location=lambda storage, loc: storage.cuda(device_id)
+            opt["path"]["resume_state"],
+            map_location=lambda storage, loc: storage.cuda(device_id),
         )
         option.check_resume(opt, resume_state["iter"])  # check resume options
     else:
@@ -59,18 +62,27 @@ def main():
     # mkdir and loggers
     if rank <= 0:  # normal training (rank -1) OR distributed training (rank 0)
         if resume_state is None:
-            util.mkdir_and_rename(opt["path"]["experiments_root"])  # rename experiment folder if exists
+            util.mkdir_and_rename(
+                opt["path"]["experiments_root"]
+            )  # rename experiment folder if exists
             util.mkdirs(
                 (
                     path
                     for key, path in opt["path"].items()
-                    if not key == "experiments_root" and "pretrain_model" not in key and "resume" not in key
+                    if not key == "experiments_root"
+                    and "pretrain_model" not in key
+                    and "resume" not in key
                 )
             )
 
         # config loggers. Before it, the log will not work
         util.setup_logger(
-            "base", opt["path"]["log"], "train_" + opt["name"], level=logging.INFO, screen=True, tofile=True
+            "base",
+            opt["path"]["log"],
+            "train_" + opt["name"],
+            level=logging.INFO,
+            screen=True,
+            tofile=True,
         )
         logger = logging.getLogger("base")
         logger.info(option.dict2str(opt))
@@ -82,14 +94,14 @@ def main():
             else:
                 logger.info(
                     "You are using PyTorch {}. \
-                            Tensorboard will use [tensorboardX]".format(
-                        version
-                    )
+                            Tensorboard will use [tensorboardX]".format(version)
                 )
                 from tensorboardX import SummaryWriter
             tb_logger = SummaryWriter(log_dir="../tb_logger/" + opt["name"])
     else:
-        util.setup_logger("base", opt["path"]["log"], "train", level=logging.INFO, screen=True)
+        util.setup_logger(
+            "base", opt["path"]["log"], "train", level=logging.INFO, screen=True
+        )
         logger = logging.getLogger("base")
 
     # convert to NoneDict, which returns None for missing keys
@@ -115,19 +127,35 @@ def main():
             total_iters = int(opt["train"]["niter"])
             total_epochs = int(math.ceil(total_iters / train_size))
             if opt["dist"]:
-                train_sampler = DistIterSampler(train_set, world_size, rank, dataset_ratio)
-                total_epochs = int(math.ceil(total_iters / (train_size * dataset_ratio)))
+                train_sampler = DistIterSampler(
+                    train_set, world_size, rank, dataset_ratio
+                )
+                total_epochs = int(
+                    math.ceil(total_iters / (train_size * dataset_ratio))
+                )
             else:
                 train_sampler = None
             train_loader = create_dataloader(train_set, dataset_opt, opt, train_sampler)
             if rank <= 0:
-                logger.info("Number of train images: {:,d}, iters: {:,d}".format(len(train_set), train_size))
-                logger.info("Total epochs needed: {:d} for iters {:,d}".format(total_epochs, total_iters))
+                logger.info(
+                    "Number of train images: {:,d}, iters: {:,d}".format(
+                        len(train_set), train_size
+                    )
+                )
+                logger.info(
+                    "Total epochs needed: {:d} for iters {:,d}".format(
+                        total_epochs, total_iters
+                    )
+                )
         elif phase == "val":
             val_set = create_dataset(dataset_opt)
             val_loader = create_dataloader(val_set, dataset_opt, opt, None)
             if rank <= 0:
-                logger.info("Number of val images in [{:s}]: {:d}".format(dataset_opt["name"], len(val_set)))
+                logger.info(
+                    "Number of val images in [{:s}]: {:d}".format(
+                        dataset_opt["name"], len(val_set)
+                    )
+                )
         else:
             raise NotImplementedError("Phase [{:s}] is not recognized.".format(phase))
     assert train_loader is not None
@@ -138,7 +166,11 @@ def main():
 
     # resume training
     if resume_state:
-        logger.info("Resuming training from epoch: {}, iter: {}.".format(resume_state["epoch"], resume_state["iter"]))
+        logger.info(
+            "Resuming training from epoch: {}, iter: {}.".format(
+                resume_state["epoch"], resume_state["iter"]
+            )
+        )
 
         start_epoch = resume_state["epoch"]
         current_step = resume_state["iter"]
@@ -148,7 +180,9 @@ def main():
         start_epoch = 0
 
     # training
-    logger.info("Start training from epoch: {:d}, iter: {:d}".format(start_epoch, current_step))
+    logger.info(
+        "Start training from epoch: {:d}, iter: {:d}".format(start_epoch, current_step)
+    )
     for epoch in range(start_epoch, total_epochs + 1):
         if opt["dist"]:
             train_sampler.set_epoch(epoch)
@@ -157,7 +191,9 @@ def main():
             if current_step > total_iters:
                 break
             # update learning rate
-            model.update_learning_rate(current_step, warmup_iter=opt["train"]["warmup_iter"])
+            model.update_learning_rate(
+                current_step, warmup_iter=opt["train"]["warmup_iter"]
+            )
 
             # training
             model.feed_data(train_data)
@@ -179,7 +215,10 @@ def main():
                 if rank <= 0:
                     logger.info(message)
             # validation
-            if opt["datasets"].get("val", None) and current_step % opt["train"]["val_freq"] == 0:
+            if (
+                opt["datasets"].get("val", None)
+                and current_step % opt["train"]["val_freq"] == 0
+            ):
                 # image restoration validation
                 if opt["model"] in ["sr", "srgan"] and rank <= 0:
                     # does not support multi-GPU validation
@@ -188,7 +227,9 @@ def main():
                     idx = 0
                     for val_data in val_loader:
                         idx += 1
-                        img_name = os.path.splitext(os.path.basename(val_data["LQ_path"][0]))[0]
+                        img_name = os.path.splitext(
+                            os.path.basename(val_data["LQ_path"][0])
+                        )[0]
                         img_dir = os.path.join(opt["path"]["val_images"], img_name)
                         util.mkdir(img_dir)
 
@@ -200,11 +241,15 @@ def main():
                         gt_img = util.tensor2img(visuals["GT"])  # uint8
 
                         # Save SR images for reference
-                        save_img_path = os.path.join(img_dir, "{:s}_{:d}.png".format(img_name, current_step))
+                        save_img_path = os.path.join(
+                            img_dir, "{:s}_{:d}.png".format(img_name, current_step)
+                        )
                         util.save_img(sr_img, save_img_path)
 
                         # calculate PSNR
-                        sr_img, gt_img = util.crop_border([sr_img, gt_img], opt["scale"])
+                        sr_img, gt_img = util.crop_border(
+                            [sr_img, gt_img], opt["scale"]
+                        )
                         avg_psnr += util.calculate_psnr(sr_img, gt_img)
                         pbar.update("Test {}".format(img_name))
 
@@ -229,18 +274,24 @@ def main():
                             idx_d, max_idx = val_data["idx"].split("/")
                             idx_d, max_idx = int(idx_d), int(max_idx)
                             if psnr_rlt.get(folder, None) is None:
-                                psnr_rlt[folder] = torch.zeros(max_idx, dtype=torch.float32, device="cuda")
+                                psnr_rlt[folder] = torch.zeros(
+                                    max_idx, dtype=torch.float32, device="cuda"
+                                )
                             model.feed_data(val_data)
                             model.test()
                             visuals = model.get_current_visuals()
                             rlt_img = util.tensor2img(visuals["rlt"])  # uint8
                             gt_img = util.tensor2img(visuals["GT"])  # uint8
                             # calculate PSNR
-                            psnr_rlt[folder][idx_d] = util.calculate_psnr(rlt_img, gt_img)
+                            psnr_rlt[folder][idx_d] = util.calculate_psnr(
+                                rlt_img, gt_img
+                            )
 
                             if rank == 0:
                                 for _ in range(world_size):
-                                    pbar.update("Test {} - {}/{}".format(folder, idx_d, max_idx))
+                                    pbar.update(
+                                        "Test {} - {}/{}".format(folder, idx_d, max_idx)
+                                    )
                         # collect data
                         for _, v in psnr_rlt.items():
                             dist.reduce(v, 0)
@@ -253,12 +304,16 @@ def main():
                                 psnr_rlt_avg[k] = torch.mean(v).cpu().item()
                                 psnr_total_avg += psnr_rlt_avg[k]
                             psnr_total_avg /= len(psnr_rlt)
-                            log_s = "# Validation # PSNR: {:.4e}:".format(psnr_total_avg)
+                            log_s = "# Validation # PSNR: {:.4e}:".format(
+                                psnr_total_avg
+                            )
                             for k, v in psnr_rlt_avg.items():
                                 log_s += " {}: {:.4e}".format(k, v)
                             logger.info(log_s)
                             if opt["use_tb_logger"] and "debug" not in opt["name"]:
-                                tb_logger.add_scalar("psnr_avg", psnr_total_avg, current_step)
+                                tb_logger.add_scalar(
+                                    "psnr_avg", psnr_total_avg, current_step
+                                )
                                 for k, v in psnr_rlt_avg.items():
                                     tb_logger.add_scalar(k, v, current_step)
                     else:
@@ -282,8 +337,12 @@ def main():
 
                             img_dir = opt["path"]["val_images"]
                             util.mkdir(img_dir)
-                            save_img_path = os.path.join(img_dir, "{}.png".format(idx_d))
-                            util.save_img(np.hstack((lq_img, rlt_img, gt_img)), save_img_path)
+                            save_img_path = os.path.join(
+                                img_dir, "{}.png".format(idx_d)
+                            )
+                            util.save_img(
+                                np.hstack((lq_img, rlt_img, gt_img)), save_img_path
+                            )
 
                             # calculate PSNR
                             psnr = util.calculate_psnr(rlt_img, gt_img)
@@ -298,7 +357,9 @@ def main():
                             log_s += " {}: {:.4e}".format(k, v)
                         logger.info(log_s)
                         if opt["use_tb_logger"] and "debug" not in opt["name"]:
-                            tb_logger.add_scalar("psnr_avg", psnr_total_avg, current_step)
+                            tb_logger.add_scalar(
+                                "psnr_avg", psnr_total_avg, current_step
+                            )
                             for k, v in psnr_rlt_avg.items():
                                 tb_logger.add_scalar(k, v, current_step)
 

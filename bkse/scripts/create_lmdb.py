@@ -106,12 +106,24 @@ def create_dataset(name, img_folder, lmdb_save_path, H_dst, W_dst, C_dst):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Kernel extractor testing")
 
-    parser.add_argument("--H", action="store", help="source image height", type=int, required=True)
-    parser.add_argument("--W", action="store", help="source image height", type=int, required=True)
-    parser.add_argument("--C", action="store", help="source image height", type=int, required=True)
-    parser.add_argument("--img_folder", action="store", help="img folder", type=str, required=True)
-    parser.add_argument("--save_path", action="store", help="save path", type=str, default=".")
-    parser.add_argument("--name", action="store", help="dataset name", type=str, required=True)
+    parser.add_argument(
+        "--H", action="store", help="source image height", type=int, required=True
+    )
+    parser.add_argument(
+        "--W", action="store", help="source image height", type=int, required=True
+    )
+    parser.add_argument(
+        "--C", action="store", help="source image height", type=int, required=True
+    )
+    parser.add_argument(
+        "--img_folder", action="store", help="img folder", type=str, required=True
+    )
+    parser.add_argument(
+        "--save_path", action="store", help="save path", type=str, default="."
+    )
+    parser.add_argument(
+        "--name", action="store", help="dataset name", type=str, required=True
+    )
 
     args = parser.parse_args()
     create_dataset(args.name, args.img_folder, args.save_path, args.H, args.W, args.C)

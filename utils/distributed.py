@@ -7,11 +7,11 @@ import torch
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from omegaconf import OmegaConf
-#from hydra.core.hydra_config import HydraConfig
+# from hydra.core.hydra_config import HydraConfig
 
 
 def init_processes(rank, size, fn, cfg, cwd):
-    """ Initialize the distributed environment. """
+    """Initialize the distributed environment."""
     try:
         cfg = OmegaConf.create(cfg)
         OmegaConf.set_struct(cfg, False)
@@ -19,7 +19,9 @@ def init_processes(rank, size, fn, cfg, cwd):
 
         os.environ["MASTER_ADDR"] = cfg.dist.master_address
         os.environ["MASTER_PORT"] = str(cfg.dist.port)
-        dist.init_process_group(backend=cfg.dist.backend, init_method="env://", rank=rank, world_size=size)
+        dist.init_process_group(
+            backend=cfg.dist.backend, init_method="env://", rank=rank, world_size=size
+        )
         fn(cfg)
         dist.barrier()
         dist.destroy_process_group()
@@ -47,20 +49,22 @@ def get_logger(name=None, cfg=None):
     if dist.get_rank() == 0 or not dist.is_available():
         load_path = os.path.join(cfg.cwd, ".hydra/hydra.yaml")
         hydra_conf = OmegaConf.load(load_path)
-        logging.config.dictConfig(OmegaConf.to_container(hydra_conf.hydra.job_logging, resolve=True))
+        logging.config.dictConfig(
+            OmegaConf.to_container(hydra_conf.hydra.job_logging, resolve=True)
+        )
     return logging.getLogger(name)
 
 
 def get_results_file(cfg, logger):
     if dist.get_rank() == 0 or not dist.is_available():
-        results_root = os.path.join(cfg.exp.root, 'results')
+        results_root = os.path.join(cfg.exp.root, "results")
         os.makedirs(results_root, exist_ok=True)
-        if '/' in cfg.results:
-            results_dir = '/'.join(cfg.results.split('/')[:-1])
+        if "/" in cfg.results:
+            results_dir = "/".join(cfg.results.split("/")[:-1])
             results_dir = os.path.join(results_root, results_dir)
-            logger.info(f'Creating directory {results_dir}')
+            logger.info(f"Creating directory {results_dir}")
             os.makedirs(results_dir, exist_ok=True)
-        results_file = f'{results_root}/{cfg.results}.yaml'
+        results_file = f"{results_root}/{cfg.results}.yaml"
     return results_file
 
 
@@ -77,7 +81,10 @@ def distributed(func):
             num_process_per_node = cfg.dist.num_processes_per_node
             world_size = num_proc_node * num_process_per_node
             mp.spawn(
-                init_processes, args=(world_size, func, cfg, cwd), nprocs=world_size, join=True,
+                init_processes,
+                args=(world_size, func, cfg, cwd),
+                nprocs=world_size,
+                join=True,
             )
         else:
             init_processes(0, size, func, cfg, cwd)

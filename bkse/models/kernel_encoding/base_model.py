@@ -68,14 +68,18 @@ class BaseModel:
 
     def get_network_description(self, network):
         """Get the string and total parameters of the network"""
-        if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
+        if isinstance(network, nn.DataParallel) or isinstance(
+            network, DistributedDataParallel
+        ):
             network = network.module
         return str(network), sum(map(lambda x: x.numel(), network.parameters()))
 
     def save_network(self, network, network_label, iter_label):
         save_filename = "{}_{}.pth".format(iter_label, network_label)
         save_path = os.path.join(self.opt["path"]["models"], save_filename)
-        if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
+        if isinstance(network, nn.DataParallel) or isinstance(
+            network, DistributedDataParallel
+        ):
             network = network.module
         state_dict = network.state_dict()
         for key, param in state_dict.items():
@@ -83,7 +87,9 @@ class BaseModel:
         torch.save(state_dict, save_path)
 
     def load_network(self, load_path, network, strict=True, prefix=""):
-        if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
+        if isinstance(network, nn.DataParallel) or isinstance(
+            network, DistributedDataParallel
+        ):
             network = network.module
         load_net = torch.load(load_path)
         load_net_clean = OrderedDict()  # remove unnecessary 'module.'
@@ -123,8 +129,12 @@ class BaseModel:
         """Resume the optimizers and schedulers for training"""
         resume_optimizers = resume_state["optimizers"]
         resume_schedulers = resume_state["schedulers"]
-        assert len(resume_optimizers) == len(self.optimizers), "Wrong lengths of optimizers"
-        assert len(resume_schedulers) == len(self.schedulers), "Wrong lengths of schedulers"
+        assert len(resume_optimizers) == len(
+            self.optimizers
+        ), "Wrong lengths of optimizers"
+        assert len(resume_schedulers) == len(
+            self.schedulers
+        ), "Wrong lengths of schedulers"
         for i, o in enumerate(resume_optimizers):
             self.optimizers[i].load_state_dict(o)
         for i, s in enumerate(resume_schedulers):

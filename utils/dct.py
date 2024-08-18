@@ -12,7 +12,9 @@ def dct1(x):
     x_shape = x.shape
     x = x.view(-1, x_shape[-1])
 
-    return torch.fft.rfft(torch.cat([x, x.flip([1])[:, 1:-1]], dim=1))[:, :, 0].view(*x_shape)
+    return torch.fft.rfft(torch.cat([x, x.flip([1])[:, 1:-1]], dim=1))[:, :, 0].view(
+        *x_shape
+    )
 
 
 def idct1(X):
@@ -43,13 +45,13 @@ def dct(x, norm=None):
 
     Vc = torch.view_as_real(torch.fft.fft(v, dim=1))
 
-    k = - torch.arange(N, dtype=x.dtype, device=x.device)[None, :] * np.pi / (2 * N)
+    k = -torch.arange(N, dtype=x.dtype, device=x.device)[None, :] * np.pi / (2 * N)
     W_r = torch.cos(k)
     W_i = torch.sin(k)
 
     V = Vc[:, :, 0] * W_r - Vc[:, :, 1] * W_i
 
-    if norm == 'ortho':
+    if norm == "ortho":
         V[:, 0] /= np.sqrt(N) * 2
         V[:, 1:] /= np.sqrt(N / 2) * 2
 
@@ -74,11 +76,15 @@ def idct(X, norm=None):
 
     X_v = X.contiguous().view(-1, x_shape[-1]) / 2
 
-    if norm == 'ortho':
+    if norm == "ortho":
         X_v[:, 0] *= np.sqrt(N) * 2
         X_v[:, 1:] *= np.sqrt(N / 2) * 2
 
-    k = torch.arange(x_shape[-1], dtype=X.dtype, device=X.device)[None, :] * np.pi / (2 * N)
+    k = (
+        torch.arange(x_shape[-1], dtype=X.dtype, device=X.device)[None, :]
+        * np.pi
+        / (2 * N)
+    )
     W_r = torch.cos(k)
     W_i = torch.sin(k)
 
@@ -92,8 +98,8 @@ def idct(X, norm=None):
 
     v = torch.fft.irfft(torch.view_as_complex(V), n=V.shape[1], dim=1)
     x = v.new_zeros(v.shape)
-    x[:, ::2] += v[:, :N - (N // 2)]
-    x[:, 1::2] += v.flip([1])[:, :N // 2]
+    x[:, ::2] += v[:, : N - (N // 2)]
+    x[:, 1::2] += v.flip([1])[:, : N // 2]
 
     return x.view(*x_shape)
 
@@ -160,10 +166,11 @@ def idct_3d(X, norm=None):
 
 class LinearDCT(nn.Linear):
     """Implement any DCT as a linear layer; in practice this executes around
-    50x faster on GPU. Unfortunately, the DCT matrix is stored, which will 
+    50x faster on GPU. Unfortunately, the DCT matrix is stored, which will
     increase memory usage.
     :param in_features: size of expected input
     :param type: which dct function in this file to use"""
+
     def __init__(self, in_features, type, norm=None, bias=False):
         self.type = type
         self.N = in_features
@@ -173,15 +180,15 @@ class LinearDCT(nn.Linear):
     def reset_parameters(self):
         # initialise using dct function
         I = torch.eye(self.N)
-        if self.type == 'dct1':
+        if self.type == "dct1":
             self.weight.data = dct1(I).data.t()
-        elif self.type == 'idct1':
+        elif self.type == "idct1":
             self.weight.data = idct1(I).data.t()
-        elif self.type == 'dct':
+        elif self.type == "dct":
             self.weight.data = dct(I, norm=self.norm).data.t()
-        elif self.type == 'idct':
+        elif self.type == "idct":
             self.weight.data = idct(I, norm=self.norm).data.t()
-        self.weight.requires_grad = False # don't learn this!
+        self.weight.requires_grad = False  # don't learn this!
 
 
 def apply_linear_2d(x, linear_layer):

@@ -27,7 +27,9 @@ class ImageBaseModel(BaseModel):
         self.netG = KernelWizard(opt["KernelWizard"]).to(self.device)
         self.use_vae = opt["KernelWizard"]["use_vae"]
         if opt["dist"]:
-            self.netG = DistributedDataParallel(self.netG, device_ids=[torch.cuda.current_device()])
+            self.netG = DistributedDataParallel(
+                self.netG, device_ids=[torch.cuda.current_device()]
+            )
         else:
             self.netG = DataParallel(self.netG)
         # print network
@@ -48,9 +50,7 @@ class ImageBaseModel(BaseModel):
             else:
                 raise NotImplementedError(
                     "Loss type [{:s}] is not\
-                                          recognized.".format(
-                        loss_type
-                    )
+                                          recognized.".format(loss_type)
                 )
             self.l_pix_w = train_opt["pixel_weight"]
             self.l_kl_w = train_opt["kl_weight"]
@@ -65,16 +65,17 @@ class ImageBaseModel(BaseModel):
                     if self.rank <= 0:
                         logger.warning(
                             "Params [{:s}] will not\
-                                       optimize.".format(
-                                k
-                            )
+                                       optimize.".format(k)
                         )
             optim_params = [
                 {"params": params, "lr": train_opt["lr_G"]},
             ]
 
             self.optimizer_G = torch.optim.Adam(
-                optim_params, lr=train_opt["lr_G"], weight_decay=wd_G, betas=(train_opt["beta1"], train_opt["beta2"])
+                optim_params,
+                lr=train_opt["lr_G"],
+                weight_decay=wd_G,
+                betas=(train_opt["beta1"], train_opt["beta2"]),
             )
             self.optimizers.append(self.optimizer_G)
 
@@ -166,15 +167,15 @@ class ImageBaseModel(BaseModel):
     def print_network(self):
         s, n = self.get_network_description(self.netG)
         if isinstance(self.netG, nn.DataParallel):
-            net_struc_str = "{} - {}".format(self.netG.__class__.__name__, self.netG.module.__class__.__name__)
+            net_struc_str = "{} - {}".format(
+                self.netG.__class__.__name__, self.netG.module.__class__.__name__
+            )
         else:
             net_struc_str = "{}".format(self.netG.__class__.__name__)
         if self.rank <= 0:
             logger.info(
                 "Network G structure: {}, \
-                        with parameters: {:,d}".format(
-                    net_struc_str, n
-                )
+                        with parameters: {:,d}".format(net_struc_str, n)
             )
             logger.info(s)
 
@@ -184,11 +185,11 @@ class ImageBaseModel(BaseModel):
             if load_path_G is not None:
                 logger.info(
                     "Loading model for G [{:s}]\
-                            ...".format(
-                        load_path_G
-                    )
+                            ...".format(load_path_G)
                 )
-                self.load_network(load_path_G, self.netG, self.opt["path"]["strict_load"])
+                self.load_network(
+                    load_path_G, self.netG, self.opt["path"]["strict_load"]
+                )
 
     def save(self, iter_label):
         self.save_network(self.netG, "G", iter_label)

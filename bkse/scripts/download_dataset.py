@@ -49,21 +49,34 @@ if __name__ == "__main__":
     }
 
     parser = argparse.ArgumentParser(
-        description="Download REDS dataset from google drive to current folder", allow_abbrev=False
+        description="Download REDS dataset from google drive to current folder",
+        allow_abbrev=False,
     )
 
-    parser.add_argument("--REDS_train_sharp", action="store_true", help="download REDS train_sharp.zip")
-    parser.add_argument("--REDS_train_blur", action="store_true", help="download REDS train_blur.zip")
-    parser.add_argument("--REDS_val_sharp", action="store_true", help="download REDS val_sharp.zip")
-    parser.add_argument("--REDS_val_blur", action="store_true", help="download REDS val_blur.zip")
+    parser.add_argument(
+        "--REDS_train_sharp", action="store_true", help="download REDS train_sharp.zip"
+    )
+    parser.add_argument(
+        "--REDS_train_blur", action="store_true", help="download REDS train_blur.zip"
+    )
+    parser.add_argument(
+        "--REDS_val_sharp", action="store_true", help="download REDS val_sharp.zip"
+    )
+    parser.add_argument(
+        "--REDS_val_blur", action="store_true", help="download REDS val_blur.zip"
+    )
     parser.add_argument("--GOPRO", action="store_true", help="download GOPRO_Large.zip")
 
     args = parser.parse_args()
 
     if args.REDS_train_sharp:
-        download_file_from_google_drive(dataset_ids["train_sharp"], "REDS/train_sharp.zip")
+        download_file_from_google_drive(
+            dataset_ids["train_sharp"], "REDS/train_sharp.zip"
+        )
     if args.REDS_train_blur:
-        download_file_from_google_drive(dataset_ids["train_blur"], "REDS/train_blur.zip")
+        download_file_from_google_drive(
+            dataset_ids["train_blur"], "REDS/train_blur.zip"
+        )
     if args.REDS_val_sharp:
         download_file_from_google_drive(dataset_ids["val_sharp"], "REDS/val_sharp.zip")
     if args.REDS_val_blur:

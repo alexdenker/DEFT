@@ -7,7 +7,13 @@ from .diffusion import Diffusion
 
 
 class ClassifierGuidanceModel:
-    def __init__(self, model: nn.Module, classifier: nn.Module, diffusion: Diffusion, cfg: DictConfig):
+    def __init__(
+        self,
+        model: nn.Module,
+        classifier: nn.Module,
+        diffusion: Diffusion,
+        cfg: DictConfig,
+    ):
         self.model = model
         self.classifier = classifier
         self.diffusion = diffusion
@@ -32,4 +38,6 @@ class ClassifierGuidanceModel:
             selected = log_probs[range(len(logits)), y.view(-1)]
 
             scale = scale * self.cfg.classifier.classifier_scale
-            return torch.autograd.grad(selected.sum(), x_in, create_graph=True)[0] * scale
+            return (
+                torch.autograd.grad(selected.sum(), x_in, create_graph=True)[0] * scale
+            )

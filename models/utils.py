@@ -3,8 +3,9 @@ import argparse
 from models.guided_diffusion.unet import UNetModel
 from models.guided_diffusion.unet_cond import CondUNetModel
 
-import argparse 
+import argparse
 from collections.abc import MutableMapping
+
 
 def dict2namespace(config):
     namespace = argparse.Namespace()
@@ -28,6 +29,7 @@ def flatten_nested_dict(nested_dict, parent_key="", sep="."):
             items.append((new_key, cfg))
 
     return dict(items)
+
 
 def get_timesteps(start_step, end_step, num_steps):
     skip = (start_step - end_step) // num_steps
@@ -107,4 +109,3 @@ def create_model(
         epsilon_based=epsilon_based,
         init_scaling_bias=init_scaling_bias,
     )
-

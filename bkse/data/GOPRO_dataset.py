@@ -66,18 +66,32 @@ class GOPRODataset(data.Dataset):
 
     def _init_lmdb(self):
         # https://github.com/chainer/chainermn/issues/129
-        self.HQ_env = lmdb.open(self.opt["dataroot_HQ"], readonly=True, lock=False, readahead=False, meminit=False)
-        self.LQ_env = lmdb.open(self.opt["dataroot_LQ"], readonly=True, lock=False, readahead=False, meminit=False)
+        self.HQ_env = lmdb.open(
+            self.opt["dataroot_HQ"],
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+        )
+        self.LQ_env = lmdb.open(
+            self.opt["dataroot_LQ"],
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+        )
 
     def _ensure_memcached(self):
         if self.mclient is None:
             # specify the config files
             server_list_config_file = None
             client_config_file = None
-            self.mclient = mc.MemcachedClient.GetInstance(server_list_config_file, client_config_file)
+            self.mclient = mc.MemcachedClient.GetInstance(
+                server_list_config_file, client_config_file
+            )
 
     def _read_img_mc(self, path):
-        """ Return BGR, HWC, [0, 255], uint8"""
+        """Return BGR, HWC, [0, 255], uint8"""
         value = mc.pyvector()
         self.mclient.Get(path, value)
         value_buf = mc.ConvertBuffer(value)
@@ -127,8 +141,12 @@ class GOPRODataset(data.Dataset):
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_LQ = img_LQ[:, :, [2, 1, 0]]
         img_HQ = img_HQ[:, :, [2, 1, 0]]
-        img_LQ = torch.from_numpy(np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))).float()
-        img_HQ = torch.from_numpy(np.ascontiguousarray(np.transpose(img_HQ, (2, 0, 1)))).float()
+        img_LQ = torch.from_numpy(
+            np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))
+        ).float()
+        img_HQ = torch.from_numpy(
+            np.ascontiguousarray(np.transpose(img_HQ, (2, 0, 1)))
+        ).float()
         return {"LQ": img_LQ, "HQ": img_HQ, "key": key}
 
     def __len__(self):

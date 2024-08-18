@@ -17,17 +17,22 @@ class Swish(nn.Module):
         return x * self.s(x)
 
 
-def get_conv(in_f, out_f, kernel_size, stride=1, bias=True, pad="zero", downsample_mode="stride"):
+def get_conv(
+    in_f, out_f, kernel_size, stride=1, bias=True, pad="zero", downsample_mode="stride"
+):
     downsampler = None
     if stride != 1 and downsample_mode != "stride":
-
         if downsample_mode == "avg":
             downsampler = nn.AvgPool2d(stride, stride)
         elif downsample_mode == "max":
             downsampler = nn.MaxPool2d(stride, stride)
         elif downsample_mode in ["lanczos2", "lanczos3"]:
             downsampler = Downsampler(
-                n_planes=out_f, factor=stride, kernel_type=downsample_mode, phase=0.5, preserve_size=True
+                n_planes=out_f,
+                factor=stride,
+                kernel_type=downsample_mode,
+                phase=0.5,
+                preserve_size=True,
             )
         else:
             assert False

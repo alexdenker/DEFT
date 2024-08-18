@@ -1,5 +1,6 @@
 import torch
-from torch.fft  import fftshift, ifftshift
+from torch.fft import fftshift, ifftshift
+
 
 def fft2c_new(data: torch.Tensor, norm: str = "ortho") -> torch.Tensor:
     """
@@ -14,9 +15,11 @@ def fft2c_new(data: torch.Tensor, norm: str = "ortho") -> torch.Tensor:
     """
     if not data.shape[-1] == 2:
         raise ValueError("Tensor does not have separate complex dim.")
-    
+
     data = ifftshift(data, dim=[-3, -2])
-    data = torch.view_as_real(torch.fft.fftn(torch.view_as_complex(data), dim=(-2, -1), norm=norm))
+    data = torch.view_as_real(
+        torch.fft.fftn(torch.view_as_complex(data), dim=(-2, -1), norm=norm)
+    )
     data = fftshift(data, dim=[-3, -2])
 
     return data
@@ -48,14 +51,14 @@ def ifft2c_new(data: torch.Tensor, norm: str = "ortho") -> torch.Tensor:
 
 
 def fft2_m(x):
-  """ FFT for multi-coil """
-  if not torch.is_complex(x):
-      x = x.type(torch.complex64)
-  return torch.view_as_complex(fft2c_new(torch.view_as_real(x)))
+    """FFT for multi-coil"""
+    if not torch.is_complex(x):
+        x = x.type(torch.complex64)
+    return torch.view_as_complex(fft2c_new(torch.view_as_real(x)))
 
 
 def ifft2_m(x):
-  """ IFFT for multi-coil """
-  if not torch.is_complex(x):
-      x = x.type(torch.complex64)
-  return torch.view_as_complex(ifft2c_new(torch.view_as_real(x)))
+    """IFFT for multi-coil"""
+    if not torch.is_complex(x):
+        x = x.type(torch.complex64)
+    return torch.view_as_complex(ifft2c_new(torch.view_as_real(x)))

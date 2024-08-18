@@ -31,7 +31,14 @@ class Concat(nn.Module):
             for inp in inputs:
                 diff2 = (inp.size(2) - target_shape2) // 2
                 diff3 = (inp.size(3) - target_shape3) // 2
-                inputs_.append(inp[:, :, diff2 : diff2 + target_shape2, diff3 : diff3 + target_shape3])
+                inputs_.append(
+                    inp[
+                        :,
+                        :,
+                        diff2 : diff2 + target_shape2,
+                        diff3 : diff3 + target_shape3,
+                    ]
+                )
 
         return torch.cat(inputs_, dim=self.dim)
 

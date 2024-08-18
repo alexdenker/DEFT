@@ -39,15 +39,25 @@ class MixDataset(data.Dataset):
         self.paths_HQ = []
         for idx, (HQ_root, LQ_root) in enumerate(zip(self.HQ_roots, self.LQ_roots)):
             paths_HQ, _ = util.get_image_paths(self.data_type, HQ_root)
-            self.paths_HQ += list(zip([idx] * len(paths_HQ), paths_HQ)) * dataset_weights[idx]
+            self.paths_HQ += (
+                list(zip([idx] * len(paths_HQ), paths_HQ)) * dataset_weights[idx]
+            )
         random.shuffle(self.paths_HQ)
         logger.info("Using lmdb meta info for cache keys.")
 
     def _init_lmdb(self):
         self.HQ_envs, self.LQ_envs = [], []
         for HQ_root, LQ_root in zip(self.HQ_roots, self.LQ_roots):
-            self.HQ_envs.append(lmdb.open(HQ_root, readonly=True, lock=False, readahead=False, meminit=False))
-            self.LQ_envs.append(lmdb.open(LQ_root, readonly=True, lock=False, readahead=False, meminit=False))
+            self.HQ_envs.append(
+                lmdb.open(
+                    HQ_root, readonly=True, lock=False, readahead=False, meminit=False
+                )
+            )
+            self.LQ_envs.append(
+                lmdb.open(
+                    LQ_root, readonly=True, lock=False, readahead=False, meminit=False
+                )
+            )
 
     def __getitem__(self, index):
         if self.HQ_envs is None:
@@ -66,18 +76,26 @@ class MixDataset(data.Dataset):
         # get the HQ image (as the center frame)
         img_HQ_l = []
         for v in neighbor_list:
-            img_HQ = util.read_img(self.HQ_envs[env_idx], "{}_{:08d}".format(name_a, v), (3, 720, 1280))
+            img_HQ = util.read_img(
+                self.HQ_envs[env_idx], "{}_{:08d}".format(name_a, v), (3, 720, 1280)
+            )
             img_HQ_l.append(img_HQ)
 
         # get LQ images
-        img_LQ = util.read_img(self.LQ_envs[env_idx], "{}_{:08d}".format(name_a, neighbor_list[-1]), (3, 720, 1280))
+        img_LQ = util.read_img(
+            self.LQ_envs[env_idx],
+            "{}_{:08d}".format(name_a, neighbor_list[-1]),
+            (3, 720, 1280),
+        )
         if self.opt["phase"] == "train":
             _, H, W = 3, 720, 1280  # LQ size
             # randomly crop
             rnd_h = random.randint(0, max(0, H - HQ_size))
             rnd_w = random.randint(0, max(0, W - HQ_size))
             img_LQ = img_LQ[rnd_h : rnd_h + HQ_size, rnd_w : rnd_w + HQ_size, :]
-            img_HQ_l = [v[rnd_h : rnd_h + HQ_size, rnd_w : rnd_w + HQ_size, :] for v in img_HQ_l]
+            img_HQ_l = [
+                v[rnd_h : rnd_h + HQ_size, rnd_w : rnd_w + HQ_size, :] for v in img_HQ_l
+            ]
 
             # augmentation - flip, rotate
             img_HQ_l.append(img_LQ)
@@ -90,8 +108,12 @@ class MixDataset(data.Dataset):
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_LQ = img_LQ[:, :, [2, 1, 0]]
         img_HQs = img_HQs[:, :, :, [2, 1, 0]]
-        img_LQ = torch.from_numpy(np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))).float()
-        img_HQs = torch.from_numpy(np.ascontiguousarray(np.transpose(img_HQs, (0, 3, 1, 2)))).float()
+        img_LQ = torch.from_numpy(
+            np.ascontiguousarray(np.transpose(img_LQ, (2, 0, 1)))
+        ).float()
+        img_HQs = torch.from_numpy(
+            np.ascontiguousarray(np.transpose(img_HQs, (0, 3, 1, 2)))
+        ).float()
         # print(img_LQ.shape, img_HQs.shape)
 
         if self.use_identical and np.random.randint(0, 10) == 0:

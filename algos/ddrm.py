@@ -33,7 +33,7 @@ class DDRM(DDIM):
             # setup vectors used in the algorithm
             singulars = H.singulars()
             Sigma = torch.zeros(x.shape[1] * x.shape[2] * x.shape[3], device=x.device)
-            
+
             ## TODO: a hack for free form inpainting, can use batch size of 1 only.
             singulars = singulars.view(-1)
             ##
@@ -95,9 +95,7 @@ class DDRM(DDIM):
 
                 # variational inference conditioned on y
                 sigma = (1 - alpha_t).sqrt()[0, 0, 0, 0] / alpha_t.sqrt()[0, 0, 0, 0]
-                sigma_s = (1 - alpha_s).sqrt()[0, 0, 0, 0] / alpha_s.sqrt()[
-                    0, 0, 0, 0
-                ]
+                sigma_s = (1 - alpha_s).sqrt()[0, 0, 0, 0] / alpha_s.sqrt()[0, 0, 0, 0]
                 xt_mod = xt / alpha_t.sqrt()[0, 0, 0, 0]
                 V_t_x = H.Vt(xt_mod)
                 SVt_x = (V_t_x * Sigma)[:, : U_t_y.shape[1]]

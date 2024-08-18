@@ -52,9 +52,7 @@ def get_config(config_str):
         elif inversion_task == "inp":
             config.forward_op.min_mask_size = 60
             config.forward_op.max_mask_size = 120
-            config.forward_op.mask_filename = (
-                "imagenet_freeform_masks.npz"
-            )
+            config.forward_op.mask_filename = "imagenet_freeform_masks.npz"
         elif inversion_task == "phase_retrieval":
             config.forward_op.oversample = 2.0
             config.forward_op.noise_std = 0.0
@@ -100,24 +98,20 @@ def get_config(config_str):
     config.wandb.log_artifact = False
     config.wandb.project = "diff-models_" + task
     config.wandb.entity = ""
-    config.wandb.code_dir = "./" 
+    config.wandb.code_dir = "./"
     config.wandb.name = ""
 
     return config
 
 
 def set_task_configs(config, task_name, model_trained_on, dname):
-    
     if task_name == "finetuning":
         config.train_model_on = dname
         config.sde = "ddpm"
         config.model_type = "mlp"
-        config.base_path = (
-            "finetuning/"
-            + config.inversion_task  
-        )
+        config.base_path = "finetuning/" + config.inversion_task
         config.ckpt_path = ""
-        
+
         config.image_path = "test"
 
         config.finetune = finetune = ml_collections.ConfigDict()
@@ -149,16 +143,14 @@ def set_task_configs(config, task_name, model_trained_on, dname):
         finetune_model.init_scaling_bias = 0.01
         finetune_model.num_training_pts = 1000
 
-        finetune_model.use_x0hat = True 
+        finetune_model.use_x0hat = True
         finetune_model.use_loggrad = True
 
         config.dataset = dataset = ml_collections.ConfigDict()
         dataset.name = dname
         dataset.root = "/home/alexdenker/ImageNet"
         dataset.meta_root = "_data"
-        dataset.subset_txt = (
-            "datasets/data/imagenet_10k.txt"
-        )
+        dataset.subset_txt = "datasets/data/imagenet_10k.txt"
         dataset.val_subset_txt = "datasets/data/imagenet_1k_val.txt"
         dataset.use_default_loader = False
 
@@ -167,9 +159,7 @@ def set_task_configs(config, task_name, model_trained_on, dname):
 
         config.dataset = dataset = ml_collections.ConfigDict()
         dataset.name = dname
-        dataset.root = "" 
+        dataset.root = ""
         dataset.meta_root = "_data"
-        dataset.subset_txt = (
-            "datasets/data/imagenet_10k.txt" 
-        )
+        dataset.subset_txt = "datasets/data/imagenet_10k.txt"
         dataset.use_default_loader = False

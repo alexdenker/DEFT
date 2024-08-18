@@ -41,9 +41,13 @@ class DSD(torch.nn.Module):
 
     def initialize_optimizers(self):
         # Optimizer for k
-        self.optimizer_k = torch.optim.Adam(self.k_dip.parameters(), lr=self.opt["k_lr"])
+        self.optimizer_k = torch.optim.Adam(
+            self.k_dip.parameters(), lr=self.opt["k_lr"]
+        )
         self.scheduler_k = StepLR(
-            self.optimizer_k, step_size=self.opt["num_epochs"] * self.opt["num_k_iters"] // 5, gamma=0.7
+            self.optimizer_k,
+            step_size=self.opt["num_epochs"] * self.opt["num_k_iters"] // 5,
+            gamma=0.7,
         )
 
         # Optimizer for x
@@ -54,18 +58,26 @@ class DSD(torch.nn.Module):
             "adamax": torch.optim.Adamax,
         }
         optimizer_func = optimizer_dict[self.opt["optimizer_name"]]
-        self.optimizer_x = SphericalOptimizer(optimizer_func, self.latent_x_var_list, lr=self.opt["x_lr"])
+        self.optimizer_x = SphericalOptimizer(
+            optimizer_func, self.latent_x_var_list, lr=self.opt["x_lr"]
+        )
 
         steps = self.opt["num_epochs"] * self.opt["num_x_iters"]
         schedule_dict = {
             "fixed": lambda x: 1,
-            "linear1cycle": lambda x: (9 * (1 - np.abs(x / steps - 1 / 2) * 2) + 1) / 10,
-            "linear1cycledrop": lambda x: (9 * (1 - np.abs(x / (0.9 * steps) - 1 / 2) * 2) + 1) / 10
+            "linear1cycle": lambda x: (9 * (1 - np.abs(x / steps - 1 / 2) * 2) + 1)
+            / 10,
+            "linear1cycledrop": lambda x: (
+                9 * (1 - np.abs(x / (0.9 * steps) - 1 / 2) * 2) + 1
+            )
+            / 10
             if x < 0.9 * steps
             else 1 / 10 + (x - 0.9 * steps) / (0.1 * steps) * (1 / 1000 - 1 / 10),
         }
         schedule_func = schedule_dict[self.opt["lr_schedule"]]
-        self.scheduler_x = torch.optim.lr_scheduler.LambdaLR(self.optimizer_x.opt, schedule_func)
+        self.scheduler_x = torch.optim.lr_scheduler.LambdaLR(
+            self.optimizer_x.opt, schedule_func
+        )
 
     def warmup_dip(self):
         self.reg_noise_std = self.opt["reg_noise_std"]
@@ -76,7 +88,9 @@ class DSD(torch.nn.Module):
         print("Warming up k DIP")
         for step in tqdm(range(self.opt["num_warmup_iters"])):
             self.optimizer_k.zero_grad()
-            dip_zk_rand = self.dip_zk + self.reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            dip_zk_rand = (
+                self.dip_zk + self.reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            )
             k = self.k_dip(dip_zk_rand)
 
             loss = mse(k, warmup_k)
@@ -100,16 +114,22 @@ class DSD(torch.nn.Module):
             else:
                 latent_in = self.latent
 
-            dip_zk_rand = self.dip_zk + self.reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            dip_zk_rand = (
+                self.dip_zk + self.reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            )
             # Apply learned linear mapping to match latent distribution to that of the mapping network
-            latent_in = self.lrelu(latent_in * self.gaussian_fit["std"] + self.gaussian_fit["mean"])
+            latent_in = self.lrelu(
+                latent_in * self.gaussian_fit["std"] + self.gaussian_fit["mean"]
+            )
 
             # Normalize image to [0,1] instead of [-1,1]
             self.gen_im = self.get_gen_im(latent_in)
             self.gen_ker = self.k_dip(dip_zk_rand)
 
             # Calculate Losses
-            loss, loss_dict = self.loss_builder(latent_in, self.gen_im, self.gen_ker, epoch)
+            loss, loss_dict = self.loss_builder(
+                latent_in, self.gen_im, self.gen_ker, epoch
+            )
             self.cur_loss = loss.cpu().detach().numpy()
 
             loss.backward()
@@ -135,16 +155,22 @@ class DSD(torch.nn.Module):
             else:
                 latent_in = self.latent
 
-            dip_zk_rand = self.dip_zk + self.reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            dip_zk_rand = (
+                self.dip_zk + self.reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            )
             # Apply learned linear mapping to match latent distribution to that of the mapping network
-            latent_in = self.lrelu(latent_in * self.gaussian_fit["std"] + self.gaussian_fit["mean"])
+            latent_in = self.lrelu(
+                latent_in * self.gaussian_fit["std"] + self.gaussian_fit["mean"]
+            )
 
             # Normalize image to [0,1] instead of [-1,1]
             self.gen_im = self.get_gen_im(latent_in)
             self.gen_ker = self.k_dip(dip_zk_rand)
 
             # Calculate Losses
-            loss, loss_dict = self.loss_builder(latent_in, self.gen_im, self.gen_ker, epoch)
+            loss, loss_dict = self.loss_builder(
+                latent_in, self.gen_im, self.gen_ker, epoch
+            )
             self.cur_loss = loss.cpu().detach().numpy()
 
             loss.backward()

@@ -9,7 +9,15 @@ class Downsampler(nn.Module):
     """
 
     def __init__(
-        self, n_planes, factor, kernel_type, phase=0, kernel_width=None, support=None, sigma=None, preserve_size=False
+        self,
+        n_planes,
+        factor,
+        kernel_type,
+        phase=0,
+        kernel_width=None,
+        support=None,
+        sigma=None,
+        preserve_size=False,
     ):
         super(Downsampler, self).__init__()
 
@@ -42,9 +50,13 @@ class Downsampler(nn.Module):
             assert False, "wrong name kernel"
 
         # note that `kernel width` will be different to actual size for phase = 1/2
-        self.kernel = get_kernel(factor, kernel_type_, phase, kernel_width, support=support, sigma=sigma)
+        self.kernel = get_kernel(
+            factor, kernel_type_, phase, kernel_width, support=support, sigma=sigma
+        )
 
-        downsampler = nn.Conv2d(n_planes, n_planes, kernel_size=self.kernel.shape, stride=factor, padding=0)
+        downsampler = nn.Conv2d(
+            n_planes, n_planes, kernel_size=self.kernel.shape, stride=factor, padding=0
+        )
         downsampler.weight.data[:] = 0
         downsampler.bias.data[:] = 0
 
@@ -55,7 +67,6 @@ class Downsampler(nn.Module):
         self.downsampler_ = downsampler
 
         if preserve_size:
-
             if self.kernel.shape[0] % 2 == 1:
                 pad = int((self.kernel.shape[0] - 1) / 2.0)
             else:
@@ -118,7 +129,12 @@ class Blurconv(nn.Module):
             x = input
 
         blurconv = nn.Conv2d(
-            self.n_planes, self.n_planes, kernel_size=kernel.size(3), stride=1, padding=0, bias=False
+            self.n_planes,
+            self.n_planes,
+            kernel_size=kernel.size(3),
+            stride=1,
+            padding=0,
+            bias=False,
         ).cuda()
 
         blurconv.weight.data[:] = kernel
@@ -137,7 +153,14 @@ class Blurconv2(nn.Module):
         self.n_planes = n_planes
         self.k_size = k_size
         self.preserve_size = preserve_size
-        self.blurconv = nn.Conv2d(self.n_planes, self.n_planes, kernel_size=k_size, stride=1, padding=0, bias=False)
+        self.blurconv = nn.Conv2d(
+            self.n_planes,
+            self.n_planes,
+            kernel_size=k_size,
+            stride=1,
+            padding=0,
+            bias=False,
+        )
 
     #        self.blurconv.weight.data[:] /= self.blurconv.weight.data.sum()
     def forward(self, input):
@@ -184,7 +207,6 @@ def get_kernel(factor, kernel_type, phase, kernel_width, support=None, sigma=Non
 
         for i in range(1, kernel.shape[0] + 1):
             for j in range(1, kernel.shape[1] + 1):
-
                 if phase == 0.5:
                     di = abs(i + 0.5 - center) / factor
                     dj = abs(j + 0.5 - center) / factor
@@ -194,11 +216,21 @@ def get_kernel(factor, kernel_type, phase, kernel_width, support=None, sigma=Non
 
                 val = 1
                 if di != 0:
-                    val = val * support * np.sin(np.pi * di) * np.sin(np.pi * di / support)
+                    val = (
+                        val
+                        * support
+                        * np.sin(np.pi * di)
+                        * np.sin(np.pi * di / support)
+                    )
                     val = val / (np.pi * np.pi * di * di)
 
                 if dj != 0:
-                    val = val * support * np.sin(np.pi * dj) * np.sin(np.pi * dj / support)
+                    val = (
+                        val
+                        * support
+                        * np.sin(np.pi * dj)
+                        * np.sin(np.pi * dj / support)
+                    )
                     val = val / (np.pi * np.pi * dj * dj)
 
                 kernel[i - 1][j - 1] = val

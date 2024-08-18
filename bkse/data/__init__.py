@@ -28,7 +28,9 @@ def create_dataloader(dataset, dataset_opt, opt=None, sampler=None):
             pin_memory=False,
         )
     else:
-        return torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1, pin_memory=False)
+        return torch.utils.data.DataLoader(
+            dataset, batch_size=1, shuffle=False, num_workers=1, pin_memory=False
+        )
 
 
 def create_dataset(dataset_opt):
@@ -49,5 +51,9 @@ def create_dataset(dataset_opt):
     dataset = D(dataset_opt)
 
     logger = logging.getLogger("base")
-    logger.info("Dataset [{:s} - {:s}] is created.".format(dataset.__class__.__name__, dataset_opt["name"]))
+    logger.info(
+        "Dataset [{:s} - {:s}] is created.".format(
+            dataset.__class__.__name__, dataset_opt["name"]
+        )
+    )
     return dataset

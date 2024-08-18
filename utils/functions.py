@@ -20,7 +20,7 @@ def preprocess(x):
 def get_timesteps(cfg):
     skip = (cfg.exp.start_step - cfg.exp.end_step) // cfg.exp.num_steps
     ts = list(range(cfg.exp.end_step, cfg.exp.start_step, skip))
-    
+
     return ts
 
 

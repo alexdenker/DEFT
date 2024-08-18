@@ -14,10 +14,18 @@ def main():
 
     parser = argparse.ArgumentParser(description="Kernel extractor testing")
 
-    parser.add_argument("--image_path", action="store", help="image path", type=str, required=True)
-    parser.add_argument("--yml_path", action="store", help="yml path", type=str, required=True)
-    parser.add_argument("--save_path", action="store", help="save path", type=str, default=".")
-    parser.add_argument("--num_samples", action="store", help="number of samples", type=int, default=1)
+    parser.add_argument(
+        "--image_path", action="store", help="image path", type=str, required=True
+    )
+    parser.add_argument(
+        "--yml_path", action="store", help="yml path", type=str, required=True
+    )
+    parser.add_argument(
+        "--save_path", action="store", help="save path", type=str, default="."
+    )
+    parser.add_argument(
+        "--num_samples", action="store", help="number of samples", type=int, default=1
+    )
 
     args = parser.parse_args()
 

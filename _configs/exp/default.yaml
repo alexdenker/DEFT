@@ -1,7 +1,7 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved
 
 #local machine
-root: "<root>/_exp"
+root: "outputs"
 save_evolution: False
 ckpt_root: "ckpts"
 samples_root: "samples"

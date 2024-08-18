@@ -14,7 +14,9 @@ class ResnetBlock(nn.Module):
         Original Resnet paper: https://arxiv.org/pdf/1512.03385.pdf
         """
         super(ResnetBlock, self).__init__()
-        self.conv_block = self.build_conv_block(dim, padding_type, norm_layer, use_dropout, use_bias)
+        self.conv_block = self.build_conv_block(
+            dim, padding_type, norm_layer, use_dropout, use_bias
+        )
 
     def build_conv_block(self, dim, padding_type, norm_layer, use_dropout, use_bias):
         """Construct a convolutional block.
@@ -42,7 +44,11 @@ class ResnetBlock(nn.Module):
                                         is not implemented"
             )
 
-        conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
+        conv_block += [
+            nn.Conv2d(dim, dim, kernel_size=3, padding=p, bias=use_bias),
+            norm_layer(dim),
+            nn.ReLU(True),
+        ]
         if use_dropout:
             conv_block += [nn.Dropout(0.5)]
 
@@ -58,7 +64,10 @@ class ResnetBlock(nn.Module):
                 f"padding {padding_type} \
                                       is not implemented"
             )
-        conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)]
+        conv_block += [
+            nn.Conv2d(dim, dim, kernel_size=3, padding=p, bias=use_bias),
+            norm_layer(dim),
+        ]
 
         return nn.Sequential(*conv_block)
 

@@ -11,9 +11,18 @@ class BicubicDownSample(nn.Module):
         """
         abs_x = torch.abs(x)
         if abs_x <= 1.0:
-            return (a + 2.0) * torch.pow(abs_x, 3.0) - (a + 3.0) * torch.pow(abs_x, 2.0) + 1
+            return (
+                (a + 2.0) * torch.pow(abs_x, 3.0)
+                - (a + 3.0) * torch.pow(abs_x, 2.0)
+                + 1
+            )
         elif 1.0 < abs_x < 2.0:
-            return a * torch.pow(abs_x, 3) - 5.0 * a * torch.pow(abs_x, 2.0) + 8.0 * a * abs_x - 4.0 * a
+            return (
+                a * torch.pow(abs_x, 3)
+                - 5.0 * a * torch.pow(abs_x, 2.0)
+                + 8.0 * a * abs_x
+                - 4.0 * a
+            )
         else:
             return 0.0
 
@@ -22,7 +31,12 @@ class BicubicDownSample(nn.Module):
         self.factor = factor
         size = factor * 4
         k = torch.tensor(
-            [self.bicubic_kernel((i - torch.floor(torch.tensor(size / 2)) + 0.5) / factor) for i in range(size)],
+            [
+                self.bicubic_kernel(
+                    (i - torch.floor(torch.tensor(size / 2)) + 0.5) / factor
+                )
+                for i in range(size)
+            ],
             dtype=torch.float32,
         )
         k = k / torch.sum(k)

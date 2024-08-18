@@ -14,7 +14,18 @@ import torch
 ####################
 
 # get image path list
-IMG_EXTENSIONS = [".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".PNG", ".ppm", ".PPM", ".bmp", ".BMP"]
+IMG_EXTENSIONS = [
+    ".jpg",
+    ".JPG",
+    ".jpeg",
+    ".JPEG",
+    ".png",
+    ".PNG",
+    ".ppm",
+    ".PPM",
+    ".bmp",
+    ".BMP",
+]
 
 
 def is_image_file(filename):
@@ -121,7 +132,9 @@ def read_img_seq(path):
     # stack to Torch tensor
     imgs = np.stack(img_l, axis=0)
     imgs = imgs[:, :, :, [2, 1, 0]]
-    imgs = torch.from_numpy(np.ascontiguousarray(np.transpose(imgs, (0, 3, 1, 2)))).float()
+    imgs = torch.from_numpy(
+        np.ascontiguousarray(np.transpose(imgs, (0, 3, 1, 2)))
+    ).float()
     return imgs
 
 
@@ -262,7 +275,12 @@ def rgb2ycbcr(img, only_y=True):
         rlt = np.dot(img, [65.481, 128.553, 24.966]) / 255.0 + 16.0
     else:
         rlt = np.matmul(
-            img, [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786], [24.966, 112.0, -18.214]]
+            img,
+            [
+                [65.481, -37.797, 112.0],
+                [128.553, -74.203, -93.786],
+                [24.966, 112.0, -18.214],
+            ],
         ) / 255.0 + [16, 128, 128]
     if in_img_type == np.uint8:
         rlt = rlt.round()
@@ -287,7 +305,12 @@ def bgr2ycbcr(img, only_y=True):
         rlt = np.dot(img, [24.966, 128.553, 65.481]) / 255.0 + 16.0
     else:
         rlt = np.matmul(
-            img, [[24.966, 112.0, -18.214], [128.553, -74.203, -93.786], [65.481, -37.797, 112.0]]
+            img,
+            [
+                [24.966, 112.0, -18.214],
+                [128.553, -74.203, -93.786],
+                [65.481, -37.797, 112.0],
+            ],
         ) / 255.0 + [16, 128, 128]
     if in_img_type == np.uint8:
         rlt = rlt.round()
@@ -308,7 +331,12 @@ def ycbcr2rgb(img):
         img *= 255.0
     # convert
     rlt = np.matmul(
-        img, [[0.00456621, 0.00456621, 0.00456621], [0, -0.00153632, 0.00791071], [0.00625893, -0.00318811, 0]]
+        img,
+        [
+            [0.00456621, 0.00456621, 0.00456621],
+            [0, -0.00153632, 0.00791071],
+            [0.00625893, -0.00318811, 0],
+        ],
     ) * 255.0 + [-222.921, 135.576, -276.836]
     if in_img_type == np.uint8:
         rlt = rlt.round()
@@ -341,14 +369,16 @@ def modcrop(img_in, scale):
 # matlab 'imresize' function, now only support 'bicubic'
 def cubic(x):
     absx = torch.abs(x)
-    absx2 = absx ** 2
-    absx3 = absx ** 3
+    absx2 = absx**2
+    absx3 = absx**3
     return (1.5 * absx3 - 2.5 * absx2 + 1) * ((absx <= 1).type_as(absx)) + (
         -0.5 * absx3 + 2.5 * absx2 - 4 * absx + 2
     ) * (((absx > 1) * (absx <= 2)).type_as(absx))
 
 
-def calculate_weights_indices(in_length, out_length, scale, kernel, kernel_width, antialiasing):
+def calculate_weights_indices(
+    in_length, out_length, scale, kernel, kernel_width, antialiasing
+):
     if (scale < 1) and (antialiasing):
         """
         Use a modified kernel to simultaneously interpolate
@@ -375,9 +405,9 @@ def calculate_weights_indices(in_length, out_length, scale, kernel, kernel_width
 
     # The indices of the input pixels involved in computing the k-th output
     # pixel are in row k of the indices matrix.
-    indices = left.view(out_length, 1).expand(out_length, P) + torch.linspace(0, P - 1, P).view(1, P).expand(
-        out_length, P
-    )
+    indices = left.view(out_length, 1).expand(out_length, P) + torch.linspace(
+        0, P - 1, P
+    ).view(1, P).expand(out_length, P)
 
     # The weights used to compute the k-th output pixel are in row k of the
     # weights matrix.
@@ -449,9 +479,15 @@ def imresize(img, scale, antialiasing=True):
     kernel_width = weights_H.size(1)
     for i in range(out_H):
         idx = int(indices_H[i][0])
-        out_1[0, i, :] = img_aug[0, idx : idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
-        out_1[1, i, :] = img_aug[1, idx : idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
-        out_1[2, i, :] = img_aug[2, idx : idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
+        out_1[0, i, :] = (
+            img_aug[0, idx : idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
+        )
+        out_1[1, i, :] = (
+            img_aug[1, idx : idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
+        )
+        out_1[2, i, :] = (
+            img_aug[2, idx : idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
+        )
 
     # process W dimension
     # symmetric copying
@@ -521,9 +557,15 @@ def imresize_np(img, scale, antialiasing=True):
     kernel_width = weights_H.size(1)
     for i in range(out_H):
         idx = int(indices_H[i][0])
-        out_1[i, :, 0] = img_aug[idx : idx + kernel_width, :, 0].transpose(0, 1).mv(weights_H[i])
-        out_1[i, :, 1] = img_aug[idx : idx + kernel_width, :, 1].transpose(0, 1).mv(weights_H[i])
-        out_1[i, :, 2] = img_aug[idx : idx + kernel_width, :, 2].transpose(0, 1).mv(weights_H[i])
+        out_1[i, :, 0] = (
+            img_aug[idx : idx + kernel_width, :, 0].transpose(0, 1).mv(weights_H[i])
+        )
+        out_1[i, :, 1] = (
+            img_aug[idx : idx + kernel_width, :, 1].transpose(0, 1).mv(weights_H[i])
+        )
+        out_1[i, :, 2] = (
+            img_aug[idx : idx + kernel_width, :, 2].transpose(0, 1).mv(weights_H[i])
+        )
 
     # process W dimension
     # symmetric copying
@@ -571,4 +613,6 @@ if __name__ == "__main__":
 
     import torchvision.utils
 
-    torchvision.utils.save_image((rlt * 255).round() / 255, "rlt.png", nrow=1, padding=0, normalize=False)
+    torchvision.utils.save_image(
+        (rlt * 255).round() / 255, "rlt.png", nrow=1, padding=0, normalize=False
+    )

@@ -30,18 +30,20 @@ import torchvision
 
 
 def main(cfg: DictConfig):
-    torch.hub.set_dir(os.path.join(cfg.exp.root, 'hub'))
+    torch.hub.set_dir(os.path.join(cfg.exp.root, "hub"))
     torch.cuda.set_device(dist.get_rank())
     logger = get_logger("ca", cfg)
     exp_root = os.path.join(cfg.exp.root, "fid_stats")
     os.makedirs(exp_root, exist_ok=True)
     loader = build_loader(cfg)
-    model = torch.hub.load("pytorch/vision:v0.13.1", "resnet50", weights='IMAGENET1K_V1').cuda()    #, force_reload=True
+    model = torch.hub.load(
+        "pytorch/vision:v0.13.1", "resnet50", weights="IMAGENET1K_V1"
+    ).cuda()  # , force_reload=True
     model = DDP(model, device_ids=[dist.get_rank()], output_device=[dist.get_rank()])
     model.eval()
     top1, top5 = 0, 0
     count = 0
-    logger.info(f'A total of {len(loader.dataset)} images are processed.')
+    logger.info(f"A total of {len(loader.dataset)} images are processed.")
     for x, y, info in tqdm(loader):
         n, c, h, w = x.size()
         with torch.no_grad():
@@ -52,7 +54,7 @@ def main(cfg: DictConfig):
             top1 += t1 * n
             top5 += t5 * n
             count += n
-    
+
     features = torch.tensor([top1, top5, count]).cpu()
     features_list = [torch.zeros_like(features) for i in range(dist.get_world_size())]
     dist.gather(features, features_list, dst=0)
@@ -66,8 +68,10 @@ def main(cfg: DictConfig):
         logger.info(f"Top1: {top1_tot / count_tot}, Top5: {top5_tot / count_tot}.")
         results_file = get_results_file(cfg, logger)
 
-        with open(results_file, 'a') as f:
-            f.write(f"Total: {count_tot}\nTop1: {top1_tot / count_tot}\nTop5: {top5_tot / count_tot}\n")
+        with open(results_file, "a") as f:
+            f.write(
+                f"Total: {count_tot}\nTop1: {top1_tot / count_tot}\nTop5: {top5_tot / count_tot}\n"
+            )
 
     dist.barrier()
 
@@ -86,7 +90,10 @@ def main_dist(cfg: DictConfig):
         num_process_per_node = cfg.dist.num_processes_per_node
         world_size = num_proc_node * num_process_per_node
         mp.spawn(
-            init_processes, args=(world_size, main, cfg, cwd), nprocs=world_size, join=True,
+            init_processes,
+            args=(world_size, main, cfg, cwd),
+            nprocs=world_size,
+            join=True,
         )
     else:
         init_processes(0, size, main, cfg, cwd)

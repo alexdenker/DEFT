@@ -33,7 +33,7 @@ class AttentionPool2d(nn.Module):
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5
+            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
@@ -321,7 +321,7 @@ def count_flops_attn(model, _x, y):
     # We perform two matmuls with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial ** 2) * c
+    matmul_ops = 2 * b * (num_spatial**2) * c
     model.total_ops += th.DoubleTensor([matmul_ops])
 
 
@@ -446,7 +446,7 @@ class UNetModel(nn.Module):
         resblock_updown=False,
         use_new_attention_order=False,
         learn_sigma=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
 
@@ -615,10 +615,15 @@ class UNetModel(nn.Module):
         self.out = nn.Sequential(
             normalization(ch),
             nn.SiLU(),
-            zero_module(conv_nd(dims, 
-                                input_ch, 
-                                2 * out_channels if self.learn_sigma else out_channels,
-                                  3, padding=1)),
+            zero_module(
+                conv_nd(
+                    dims,
+                    input_ch,
+                    2 * out_channels if self.learn_sigma else out_channels,
+                    3,
+                    padding=1,
+                )
+            ),
         )
         if use_fp16:
             self.convert_to_fp16()
@@ -656,13 +661,12 @@ class UNetModel(nn.Module):
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
 
         if self.num_classes is not None:
-            
             # print('************************')
             # print('y.shape', y.shape)
             # print('x.shape', x.shape)
             # print('************************')
-            #import pdb; pdb.set_trace()
-            
+            # import pdb; pdb.set_trace()
+
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
@@ -871,7 +875,7 @@ class EncoderUNetModel(nn.Module):
             )
         else:
             raise NotImplementedError(f"Unexpected {pool} pooling")
-        
+
         if use_fp16:
             self.convert_to_fp16()
 

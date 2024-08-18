@@ -23,7 +23,7 @@ URL_MAP = {
     "imagenet_256_classifier": "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_classifier.pt",
     "imagenet_512_cond": "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/512x512_diffusion.pt",
     "imagenet_512_classifier": "https://openaipublic.blob.core.windows.net/diffusion/jul-2021/512x512_classifier.pt",
-    "ffhq_256": "https://drive.google.com/uc\?id=117Y6Z6-Hg6TMZVIXMmgYbpZy7QvTXign"
+    "ffhq_256": "https://drive.google.com/uc\?id=117Y6Z6-Hg6TMZVIXMmgYbpZy7QvTXign",
 }
 CKPT_MAP = {
     "cifar10": "diffusion_cifar10_model/model-790000.ckpt",
@@ -39,7 +39,7 @@ CKPT_MAP = {
     "imagenet_256_classifier": "imagenet/256x256_classifier.pt",
     "imagenet_512_classifier": "imagenet/512x512_classifier.pt",
     "imagenet_512_cond": "imagenet/512x512_diffusion.pt",
-    "ffhq_256": "ffhq/ffhq_10m.pt"
+    "ffhq_256": "ffhq/ffhq_10m.pt",
 }
 MD5_MAP = {
     "cifar10": "82ed3067fd1002f5cf4c339fb80c4669",
@@ -55,7 +55,7 @@ MD5_MAP = {
 
 def download(url, local_path, chunk_size=1024):
     if dist.get_rank() == 0:
-        if 'drive.google.com' in url:
+        if "drive.google.com" in url:
             gdown.download(url, local_path, quiet=False)
         else:
             os.makedirs(os.path.split(local_path)[0], exist_ok=True)
@@ -76,9 +76,9 @@ def md5_hash(path):
     return hashlib.md5(content).hexdigest()
 
 
-def get_ckpt_path(name, root=None, check=False, prefix='exp'):
-    if 'church_outdoor' in name:
-        name = name.replace('church_outdoor', 'church')
+def get_ckpt_path(name, root=None, check=False, prefix="exp"):
+    if "church_outdoor" in name:
+        name = name.replace("church_outdoor", "church")
     assert name in URL_MAP
     # Modify the path when necessary
     cachedir = os.environ.get("XDG_CACHE_HOME", os.path.join(prefix, "logs/"))
@@ -97,7 +97,7 @@ def get_ckpt_path(name, root=None, check=False, prefix='exp'):
 
 
 def ckpt_path_adm(name, cfg):
-    logger = get_logger('ckpt', cfg)
+    logger = get_logger("ckpt", cfg)
 
     ckpt_root = os.path.join(cfg.exp.root, cfg.exp.ckpt_root)
     ckpt = os.path.join(ckpt_root, CKPT_MAP[name])

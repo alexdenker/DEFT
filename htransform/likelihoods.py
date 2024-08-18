@@ -36,15 +36,16 @@ from utils.fft_utils import fft2_m, ifft2_m
 
 from radon.tomography import Tomography
 
+
 def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
     """
-    For the various inversion tasks, we have slightly different inputs to the model. 
+    For the various inversion tasks, we have slightly different inputs to the model.
 
-    Superresolution, Radon, HDR, NonLinearBlur: 
+    Superresolution, Radon, HDR, NonLinearBlur:
         xi (noisy image at step i)
         x0hat (tweedie based on unconditional diffusion model)
         log_grad term ( A*(Ax0hat - y) )
-    
+
     PhaseRetrieval:
         xi (noisy image at step i)
         x0hat (tweedie based on unconditional diffusion model)
@@ -59,7 +60,7 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
         masks (binary mask)
         log_grad term ( A*(Ax0hat - y) )
     """
-    
+
     if (
         isinstance(likelihood, Superresolution)
         or isinstance(likelihood, Radon)
@@ -68,21 +69,21 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
     ):
         xi_condition = xi
         if cfg_model.use_x0hat:
-          xi_condition = torch.concat((xi_condition, x0hat), dim=1)
-        
+            xi_condition = torch.concat((xi_condition, x0hat), dim=1)
+
         if cfg_model.use_loggrad:
-          cheap_guidance = likelihood.log_likelihood_grad(x=x0hat, y=y)
-          xi_condition = torch.concat((xi_condition, cheap_guidance), dim=1)
+            cheap_guidance = likelihood.log_likelihood_grad(x=x0hat, y=y)
+            xi_condition = torch.concat((xi_condition, cheap_guidance), dim=1)
         else:
-          # if we dont use the log_grad term we use A*y (makes sense for CT and superres as the measurements have a different shape)
-          ATy = likelihood.A_adjoint(y)
-          xi_condition = torch.concat((xi_condition, ATy), dim=1)
-        
+            # if we dont use the log_grad term we use A*y (makes sense for CT and superres as the measurements have a different shape)
+            ATy = likelihood.A_adjoint(y)
+            xi_condition = torch.concat((xi_condition, ATy), dim=1)
+
     elif isinstance(likelihood, PhaseRetrieval):
         cheap_guidance = likelihood.cheap_guidance(x0hat=x0hat, y=y)
         cheap_guidance_grad = likelihood.log_likelihood_grad(x=xi, y=y)
         simple_inverse = likelihood.simple_inverse(x0hat=x0hat, y=y)
-        
+
         # TODO: Should we ensure all things here are in [-1, 1]?
 
         xi_condition = torch.concat(
@@ -94,18 +95,19 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
 
         xi_condition = torch.concat(
             (
-                xi, # noisy image
-                x0hat, # unconditional denoised image
-                y, # measurements 
-                masks[:, None, :, :].float(), # mask
+                xi,  # noisy image
+                x0hat,  # unconditional denoised image
+                y,  # measurements
+                masks[:, None, :, :].float(),  # mask
                 cheap_guidance,
             ),
             dim=1,
         )  # concat across channels
-  
-    #xi_condition = x 
-  
+
+    # xi_condition = x
+
     return xi_condition
+
 
 class Likelihood:
     def sample(self, x: torch.Tensor) -> torch.Tensor:
@@ -251,20 +253,20 @@ class HDR(Likelihood):
 class NonLinearBlur(Likelihood):
     def __init__(self, opt_yml_path, current_dir, device):
         self.operator = NLB(opt_yml_path, current_dir, device)
-        
+
     def _sample(self, x: torch.Tensor) -> torch.Tensor:
         y = self.A(x)
 
         y_noise = y
 
         return y_noise
-    
+
     def A(self, x):
         return self.operator.H(x)
 
     def A_adjoint(self, y):
         return self.operator.H_pinv(y)
-    
+
     def log_likelihood_grad(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         res = self.A(x) - y
 
@@ -345,44 +347,57 @@ class PhaseRetrieval(Likelihood):
     def simple_inverse(self, x0hat, y):
         x_start = (x0hat + 1.0) / 2.0
 
-        xi = F.pad(x_start, (self.pad, self.pad, self.pad, self.pad)) 
+        xi = F.pad(x_start, (self.pad, self.pad, self.pad, self.pad))
         beta = 0.95
 
         for k in range(7):
-            for i in range(50):    
-                xi_fft = fft2_m(xi) 
+            for i in range(50):
+                xi_fft = fft2_m(xi)
                 g_fft = y * torch.exp(1j * torch.angle(xi_fft))
                 g_ifft = ifft2_m(g_fft)
-                
+
                 if k % 2 == 0:
-                    xi = F.pad(g_ifft[:, :, self.pad:-self.pad, self.pad:-self.pad], (self.pad, self.pad, self.pad, self.pad))
+                    xi = F.pad(
+                        g_ifft[:, :, self.pad : -self.pad, self.pad : -self.pad],
+                        (self.pad, self.pad, self.pad, self.pad),
+                    )
                 else:
-                    tmp = g_ifft[:, :, self.pad:-self.pad, self.pad:-self.pad]
+                    tmp = g_ifft[:, :, self.pad : -self.pad, self.pad : -self.pad]
                     xi = xi - beta * g_ifft
-                    xi[:, :, self.pad:-self.pad, self.pad:-self.pad] = tmp
+                    xi[:, :, self.pad : -self.pad, self.pad : -self.pad] = tmp
 
                 # after three iterations: align color channels
                 if k == 3:
                     if xi.shape[1] == 3:
-                        xi[0,1,:,:] = xi[0,0,:,:]
-                        xi[0,2,:,:] = xi[0,0,:,:]
+                        xi[0, 1, :, :] = xi[0, 0, :, :]
+                        xi[0, 2, :, :] = xi[0, 0, :, :]
 
-        xi = 2.0 * self.forward_op.undo_padding(xi.abs(), self.pad, self.pad, self.pad, self.pad) - 1.
+        xi = (
+            2.0
+            * self.forward_op.undo_padding(
+                xi.abs(), self.pad, self.pad, self.pad, self.pad
+            )
+            - 1.0
+        )
         return xi
 
-import math 
+
+import math
+
+
 class Radon(Likelihood):
     def __init__(self, num_angles, sigma_y, image_size, device):
         self.num_angles = num_angles
         self.sigma_y = sigma_y
 
-        #self.ray_trafo = SimpleTrafo(
+        # self.ray_trafo = SimpleTrafo(
         #    im_shape=[image_size, image_size],
         #    num_angles=self.num_angles,
-        #)
-        #self.ray_trafo = self.ray_trafo.to(device=device)
-        self.physics = Tomography(img_width=image_size,angles=num_angles,device=device)
-
+        # )
+        # self.ray_trafo = self.ray_trafo.to(device=device)
+        self.physics = Tomography(
+            img_width=image_size, angles=num_angles, device=device
+        )
 
     def loss(self, x: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
         return None

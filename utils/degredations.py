@@ -947,7 +947,7 @@ class ColorShiftOperator(NonLinearOperator, H_functions):
         self.blur_model = self.prepare_nonlinear_blur_model(opt_yml_path, current_dir)
 
         torch.manual_seed(42)
-        self.random_kernel = torch.randn(1, 512, 2, 2).to(self.device) * 1.2 
+        self.random_kernel = torch.randn(1, 512, 2, 2).to(self.device) * 1.2
 
     def prepare_nonlinear_blur_model(self, opt_yml_path, current_dir):
         """
@@ -965,7 +965,7 @@ class ColorShiftOperator(NonLinearOperator, H_functions):
             # current_dir = os.getcwd()
             # current_dir = '/lustre/fsw/nvresearch/mmardani/source/latent-diffusion-sampling/pgdm'
             # current_dir = '/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm'
-            #model_path = os.path.join(current_dir, model_path)
+            # model_path = os.path.join(current_dir, model_path)
             print("model_path", model_path)
         blur_model = KernelWizard(opt)
         blur_model.eval()
@@ -976,18 +976,20 @@ class ColorShiftOperator(NonLinearOperator, H_functions):
                 param.requires_grad_(False)
 
         # Load the model state_dict directly
-        #state_dict = torch.load(model_path, map_location=self.device)
-        #state_dict = {"state_dict": state_dict}
+        # state_dict = torch.load(model_path, map_location=self.device)
+        # state_dict = {"state_dict": state_dict}
 
-        #blur_model.load_state_dict(state_dict, strict=False)
-        #blur_model.load_state_dict(torch.load(model_path))
+        # blur_model.load_state_dict(state_dict, strict=False)
+        # blur_model.load_state_dict(torch.load(model_path))
         blur_model = blur_model.to(self.device)
 
         return blur_model
 
     def forward(self, data, **kwargs):
-        #self.random_kernel = torch.randn(data.shape[0], 512, 2, 2).to(self.device) * 1.2 
-        kernel = torch.repeat_interleave(self.random_kernel, repeats=data.shape[0], dim=0)
+        # self.random_kernel = torch.randn(data.shape[0], 512, 2, 2).to(self.device) * 1.2
+        kernel = torch.repeat_interleave(
+            self.random_kernel, repeats=data.shape[0], dim=0
+        )
         data = (data + 1.0) / 2.0  # [-1, 1] -> [0, 1]
         blurred = self.blur_model.adaptKernel(data, kernel=self.random_kernel)
         blurred = (blurred * 2.0 - 1.0).clamp(-1, 1)  # [0, 1] -> [-1, 1]
@@ -1006,9 +1008,9 @@ class NonlinearBlurOperator(NonLinearOperator, H_functions):
         self.blur_model = self.prepare_nonlinear_blur_model(opt_yml_path, current_dir)
 
         self.random_kernel = (
-            torch.randn(
-                1, 512, 2, 2, generator=torch.Generator().manual_seed(42)
-            ).to(self.device)
+            torch.randn(1, 512, 2, 2, generator=torch.Generator().manual_seed(42)).to(
+                self.device
+            )
             * 1.2
         )
         # self.random_kernel = torch.randn(1, 512, 2, 2).to(self.device) * 1.2

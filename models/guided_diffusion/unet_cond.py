@@ -17,16 +17,17 @@ from .nn import (
     zero_module,
 )
 
-from .unet import (AttentionPool2d, 
-                        TimestepBlock, 
-                        TimestepEmbedSequential, 
-                        Upsample, 
-                        Downsample,
-                        ResBlock,
-                        AttentionBlock,
-                        count_flops_attn,
-                        QKVAttentionLegacy,
-                        QKVAttention
+from .unet import (
+    AttentionPool2d,
+    TimestepBlock,
+    TimestepEmbedSequential,
+    Upsample,
+    Downsample,
+    ResBlock,
+    AttentionBlock,
+    count_flops_attn,
+    QKVAttentionLegacy,
+    QKVAttention,
 )
 
 
@@ -357,7 +358,7 @@ class CondUNetModel(nn.Module):
                 return h + time_scaling[:, None, None, None] * x[:, -1, :, :].unsqueeze(
                     1
                 )
-            
+
             elif self.in_channels == 13:
                 return h + time_scaling[:, None, None, None] * x[:, 10:, :, :]
             else:

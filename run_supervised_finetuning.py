@@ -76,6 +76,7 @@ def data_transform(config, X):
 
     return X
 
+
 def inverse_data_transform(config, X):
     if hasattr(config, "image_mean"):
         X = X + config.image_mean.to(X.device)[None, ...]
@@ -106,16 +107,21 @@ def coordinator(args):
             "ellipses": "diskellipses.yml",
             "imagenet": "imagenet_256.yml",
             "lodopab": "lodopab.yml",
-            "aapm": "aapm.yml"
+            "aapm": "aapm.yml",
         }
-        assert args.model_trained_on in list(name_to_yaml.keys()), "model configs not found for {}".format(args.model_trained_on)
+        assert args.model_trained_on in list(
+            name_to_yaml.keys()
+        ), "model configs not found for {}".format(args.model_trained_on)
 
-        with open(os.path.join("configs", name_to_yaml[args.model_trained_on]), "r") as f:
+        with open(
+            os.path.join("configs", name_to_yaml[args.model_trained_on]), "r"
+        ) as f:
             model_config = yaml.safe_load(f)
         model_config = dict2namespace(model_config)
 
         sde = Diffusion(
-             num_diffusion_timesteps=model_config.diffusion.num_diffusion_timesteps)
+            num_diffusion_timesteps=model_config.diffusion.num_diffusion_timesteps
+        )
 
         pretrained_model = create_model(**vars(model_config.model))
         pretrained_model.convert_to_fp32()
@@ -268,7 +274,6 @@ def coordinator(args):
             )
 
         elif args.inversion_task == "blur":
-   
             likelihood = NonLinearBlur(
                 opt_yml_path=args.forward_op.opt_yml_path,
                 current_dir=os.getcwd(),
@@ -350,6 +355,7 @@ def coordinator(args):
         # Save the wandb config so that it can be loaded again
         with open(os.path.join(log_dir, "wandb_config.yaml"), "w") as file:
             yaml.dump(wandb.config, file)
+
 
 if __name__ == "__main__":
 

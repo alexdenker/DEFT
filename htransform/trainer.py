@@ -19,11 +19,12 @@ from htransform.likelihoods import (
     Radon,
     Superresolution,
     NonLinearBlur,
-    get_xi_condition
+    get_xi_condition,
 )
 from htransform.losses import epsilon_based_loss_fn_finetuning
 from models.classifier_guidance_model import ClassifierGuidanceModel
 from models.utils import get_timesteps
+
 
 def inverse_data_transform(x_, rescale=True):
     # Confirm that the image being passed in is in the range -1, 1
@@ -32,6 +33,7 @@ def inverse_data_transform(x_, rescale=True):
         x_ = (x_ + 1.0) / 2.0
 
     return x_
+
 
 def set_annealed_lr(opt, base_lr, frac_done):
     lr = base_lr * (1 - frac_done)
@@ -103,15 +105,14 @@ def htransform_trainer(
             x = batch
             x = x.to(device)
 
-
             loss = epsilon_based_loss_fn_finetuning(
                 x=x,
                 model=finetuned_score,
                 diffusion=diffusion,
                 pretrained_model=pretrained_model,
                 likelihood=likelihood,
-                cfg_model=cfg_model
-                )
+                cfg_model=cfg_model,
+            )
             loss.backward()
 
             if optim_kwargs.get("lr_annealing", False):
@@ -130,7 +131,7 @@ def htransform_trainer(
                 wandb.log(
                     {"train/loss": loss.item(), "step": epoch * len(train_dl) + idx}
                 )
-             
+
         if (epoch % optim_kwargs["save_model_every_n_epoch"]) == 0 or (
             epoch == optim_kwargs["epochs"] - 1
         ):
@@ -206,8 +207,13 @@ def htransform_trainer(
                     x0hat = (x - eps1 * (1 - alpha_t).sqrt()) / alpha_t.sqrt()
 
                     xi_condition = get_xi_condition(
-                            xi=x, x0hat=x0hat, y=y, likelihood=likelihood, masks=masks, cfg_model=cfg_model
-                        )
+                        xi=x,
+                        x0hat=x0hat,
+                        y=y,
+                        likelihood=likelihood,
+                        masks=masks,
+                        cfg_model=cfg_model,
+                    )
                     eps2 = finetuned_score(xi_condition, t)
 
                     eps = eps1 + eps2
@@ -221,10 +227,15 @@ def htransform_trainer(
                     alpha_t = diffusion.alpha(t).view(-1, 1, 1, 1)
 
                     x0hat = (x - eps1 * (1 - alpha_t).sqrt()) / alpha_t.sqrt()
-                    
+
                     xi_condition = get_xi_condition(
-                            xi=x, x0hat=x0hat, y=y, likelihood=likelihood, masks=masks, cfg_model=cfg_model
-                        )
+                        xi=x,
+                        x0hat=x0hat,
+                        y=y,
+                        likelihood=likelihood,
+                        masks=masks,
+                        cfg_model=cfg_model,
+                    )
                     eps2 = ema.ema_model(xi_condition, t)
 
                     eps = eps1 + eps2
@@ -256,7 +267,7 @@ def htransform_trainer(
                     conf = OmegaConf.create(cfg_dict)
                     sampler = DDIM(model=guidance_model, cfg=conf)
                     sampler_ema = DDIM(model=guidance_model_ema, cfg=conf)
-                        
+
                     print("sampling w/ point estimate model")
                     ts = get_timesteps(
                         start_step=1000, end_step=0, num_steps=val_kwargs["num_steps"]
@@ -285,7 +296,11 @@ def htransform_trainer(
                     if x.shape[1] == 3:
                         ax1.set_title("ground truth")
                         ax1.imshow(
-                            (x[i, :, :, :].permute(1, 2, 0).cpu().detach().numpy() + 1.0) / 2.0
+                            (
+                                x[i, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
+                                + 1.0
+                            )
+                            / 2.0
                         )
                         ax1.axis("off")
 

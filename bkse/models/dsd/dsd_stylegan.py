@@ -12,25 +12,36 @@ class DSDStyleGAN(DSD):
 
     def load_synthesis_network(self):
         self.synthesis = G_synthesis().cuda()
-        self.synthesis.load_state_dict(torch.load("experiments/pretrained/stylegan_synthesis.pt"))
+        self.synthesis.load_state_dict(
+            torch.load("experiments/pretrained/stylegan_synthesis.pt")
+        )
         for v in self.synthesis.parameters():
             v.requires_grad = False
 
     def initialize_mapping_network(self):
         if Path("experiments/pretrained/gaussian_fit_stylegan.pt").exists():
-            self.gaussian_fit = torch.load("experiments/pretrained/gaussian_fit_stylegan.pt")
+            self.gaussian_fit = torch.load(
+                "experiments/pretrained/gaussian_fit_stylegan.pt"
+            )
         else:
             if self.verbose:
                 print("\tRunning Mapping Network")
 
             mapping = G_mapping().cuda()
-            mapping.load_state_dict(torch.load("experiments/pretrained/stylegan_mapping.pt"))
+            mapping.load_state_dict(
+                torch.load("experiments/pretrained/stylegan_mapping.pt")
+            )
             with torch.no_grad():
                 torch.manual_seed(0)
                 latent = torch.randn((1000000, 512), dtype=torch.float32, device="cuda")
                 latent_out = torch.nn.LeakyReLU(5)(mapping(latent))
-                self.gaussian_fit = {"mean": latent_out.mean(0), "std": latent_out.std(0)}
-                torch.save(self.gaussian_fit, "experiments/pretrained/gaussian_fit_stylegan.pt")
+                self.gaussian_fit = {
+                    "mean": latent_out.mean(0),
+                    "std": latent_out.std(0),
+                }
+                torch.save(
+                    self.gaussian_fit, "experiments/pretrained/gaussian_fit_stylegan.pt"
+                )
                 if self.verbose:
                     print('\tSaved "gaussian_fit_stylegan.pt"')
 
@@ -39,9 +50,19 @@ class DSDStyleGAN(DSD):
 
         # Generate latent tensor
         if self.opt["tile_latent"]:
-            self.latent = torch.randn((batch_size, 1, 512), dtype=torch.float, requires_grad=True, device="cuda")
+            self.latent = torch.randn(
+                (batch_size, 1, 512),
+                dtype=torch.float,
+                requires_grad=True,
+                device="cuda",
+            )
         else:
-            self.latent = torch.randn((batch_size, 18, 512), dtype=torch.float, requires_grad=True, device="cuda")
+            self.latent = torch.randn(
+                (batch_size, 18, 512),
+                dtype=torch.float,
+                requires_grad=True,
+                device="cuda",
+            )
 
         # Generate list of noise tensors
         noise = []  # stores all of the noise tensors
@@ -53,7 +74,9 @@ class DSDStyleGAN(DSD):
             # dimension of the ith noise tensor
             res = (batch_size, 1, 2 ** (i // 2 + 2), 2 ** (i // 2 + 2))
 
-            if noise_type == "zero" or i in [int(layer) for layer in bad_noise_layers.split(".")]:
+            if noise_type == "zero" or i in [
+                int(layer) for layer in bad_noise_layers.split(".")
+            ]:
                 new_noise = torch.zeros(res, dtype=torch.float, device="cuda")
                 new_noise.requires_grad = False
             elif noise_type == "fixed":

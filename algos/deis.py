@@ -21,18 +21,22 @@ class DEIS:
         ss = [-1] + list(ts[:-1])
         xt_s = [x.cpu()]
         x0_s = []
-        
+
         xt = x
-        
+
         for ti, si in zip(reversed(ts), reversed(ss)):
             t = torch.ones(n).to(x.device).long() * ti
             s = torch.ones(n).to(x.device).long() * si
             alpha_t = self.diffusion.alpha(t).view(-1, 1, 1, 1)
             alpha_s = self.diffusion.alpha(s).view(-1, 1, 1, 1)
-            c1 = ((1 - alpha_t / alpha_s) * (1 - alpha_s) / (1 - alpha_t)).sqrt() * self.eta
-            c2 = ((1 - alpha_s) - c1 ** 2).sqrt()
+            c1 = (
+                (1 - alpha_t / alpha_s) * (1 - alpha_s) / (1 - alpha_t)
+            ).sqrt() * self.eta
+            c2 = ((1 - alpha_s) - c1**2).sqrt()
             if self.cond_awd:
-                scale = alpha_s.sqrt() / (alpha_s.sqrt() - c2 * alpha_t.sqrt() / (1 - alpha_t).sqrt())
+                scale = alpha_s.sqrt() / (
+                    alpha_s.sqrt() - c2 * alpha_t.sqrt() / (1 - alpha_t).sqrt()
+                )
                 scale = scale.view(-1)[0].item()
             else:
                 scale = 1.0
@@ -41,7 +45,7 @@ class DEIS:
             xt_s.append(xs.cpu())
             x0_s.append(x0_pred.cpu())
             xt = xs
-            
+
         return list(reversed(xt_s)), list(reversed(x0_s))
 
     def get_coef(self, ts, device):
@@ -56,10 +60,6 @@ class DEIS:
         alpha_rev_ss = self.diffusion.alpha(rev_ss_th)
         psi = alpha_rev_ss / alpha_rev_ts
 
-        
-
-
-    
     def initialize(self, x, y, ts, **kwargs):
         if self.sdedit:
             n = x.size(0)

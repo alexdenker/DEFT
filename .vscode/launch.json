@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "DEFT: Eval with args",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "args": [
+                "exp.overwrite=True",
+                "algo=reddiff",
+                "algo.awd=True",
+                "algo.deg=hdr",
+                "algo.eta=1.0",
+                "exp.num_steps=1000",
+                "algo.sigma_y=0.0",
+                "loader.batch_size=10",
+                "exp.seed=3",
+                "loader=imagenet256_ddrmpp",
+                "dist.num_processes_per_node=1",
+                "exp.name=hdr_reddiff_imageneto",
+                "exp.save_ori=True",
+                "exp.save_deg=True",
+                "exp.smoke_test=-1",
+                "exp.samples_root=_exp",
+                "algo.grad_term_weight=0.25",
+                "exp.save_evolution=False",
+                "algo.lr=0.5",
+                "exp.start_step=1000",
+                "exp.end_step=0"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+    ]
+}

@@ -29,11 +29,13 @@ class KernelDIP(nn.Module):
 
         n_downsampling = 5
         for i in range(n_downsampling):  # add downsampling layers
-            mult = 2 ** i
+            mult = 2**i
             input_nc = min(nf * mult, kernel_dim)
             output_nc = min(nf * mult * 2, kernel_dim)
             model += [
-                nn.Conv2d(input_nc, output_nc, kernel_size=3, stride=2, padding=1, bias=True),
+                nn.Conv2d(
+                    input_nc, output_nc, kernel_size=3, stride=2, padding=1, bias=True
+                ),
                 norm_layer(nf * mult * 2),
                 nn.ReLU(True),
             ]

@@ -26,8 +26,12 @@ class JointDeblur(ImageDeblur):
         print("Deblurring")
         reg_noise_std = self.opt["reg_noise_std"]
         for step in tqdm(range(self.opt["num_iters"])):
-            dip_zx_rand = self.dip_zx + reg_noise_std * torch.randn_like(self.dip_zx).cuda()
-            dip_zk_rand = self.dip_zk + reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            dip_zx_rand = (
+                self.dip_zx + reg_noise_std * torch.randn_like(self.dip_zx).cuda()
+            )
+            dip_zk_rand = (
+                self.dip_zk + reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            )
 
             self.x_optimizer.zero_grad()
             self.k_optimizer.zero_grad()

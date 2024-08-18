@@ -10,13 +10,14 @@ from models.diffusion import Diffusion
 
 from htransform.likelihoods import Likelihood, InPainting, get_xi_condition
 
+
 def epsilon_based_loss_fn_finetuning(
-    x: torch.Tensor, 
-    model: CondUNetModel, 
-    diffusion: Diffusion, 
-    pretrained_model: torch.nn.Module, 
-    likelihood: Likelihood, 
-    cfg_model 
+    x: torch.Tensor,
+    model: CondUNetModel,
+    diffusion: Diffusion,
+    pretrained_model: torch.nn.Module,
+    likelihood: Likelihood,
+    cfg_model,
 ):
     if isinstance(likelihood, InPainting):
         y, masks = likelihood.sample(x)
@@ -39,7 +40,12 @@ def epsilon_based_loss_fn_finetuning(
         x0hat = (xi - z2 * (1 - alpha_t).sqrt()) / alpha_t.sqrt()
 
         xi_condition = get_xi_condition(
-            xi=xi, x0hat=x0hat, y=y, likelihood=likelihood, masks=masks, cfg_model=cfg_model
+            xi=xi,
+            x0hat=x0hat,
+            y=y,
+            likelihood=likelihood,
+            masks=masks,
+            cfg_model=cfg_model,
         )
 
     z1 = model(xi_condition, 1.0 * i)
@@ -47,7 +53,7 @@ def epsilon_based_loss_fn_finetuning(
     zhat = z1 + z2
 
     if zhat.ndim == 4:
-        loss = torch.mean( torch.sum((z - zhat) ** 2, dim=(1, 2, 3)))
+        loss = torch.mean(torch.sum((z - zhat) ** 2, dim=(1, 2, 3)))
     elif zhat.ndim == 2:
         loss = torch.mean(torch.sum((z - zhat) ** 2, dim=(1,)))
 

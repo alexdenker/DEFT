@@ -29,10 +29,18 @@ class StyleLoss(nn.Module):
 
         # Compute loss
         style_loss = 0.0
-        style_loss += self.criterion(self.compute_gram(x_vgg["relu2_2"]), self.compute_gram(y_vgg["relu2_2"]))
-        style_loss += self.criterion(self.compute_gram(x_vgg["relu3_4"]), self.compute_gram(y_vgg["relu3_4"]))
-        style_loss += self.criterion(self.compute_gram(x_vgg["relu4_4"]), self.compute_gram(y_vgg["relu4_4"]))
-        style_loss += self.criterion(self.compute_gram(x_vgg["relu5_2"]), self.compute_gram(y_vgg["relu5_2"]))
+        style_loss += self.criterion(
+            self.compute_gram(x_vgg["relu2_2"]), self.compute_gram(y_vgg["relu2_2"])
+        )
+        style_loss += self.criterion(
+            self.compute_gram(x_vgg["relu3_4"]), self.compute_gram(y_vgg["relu3_4"])
+        )
+        style_loss += self.criterion(
+            self.compute_gram(x_vgg["relu4_4"]), self.compute_gram(y_vgg["relu4_4"])
+        )
+        style_loss += self.criterion(
+            self.compute_gram(x_vgg["relu5_2"]), self.compute_gram(y_vgg["relu5_2"])
+        )
 
         return style_loss
 
@@ -55,11 +63,21 @@ class PerceptualLoss(nn.Module):
         x_vgg, y_vgg = self.vgg(x), self.vgg(y)
 
         content_loss = 0.0
-        content_loss += self.weights[0] * self.criterion(x_vgg["relu1_1"], y_vgg["relu1_1"])
-        content_loss += self.weights[1] * self.criterion(x_vgg["relu2_1"], y_vgg["relu2_1"])
-        content_loss += self.weights[2] * self.criterion(x_vgg["relu3_1"], y_vgg["relu3_1"])
-        content_loss += self.weights[3] * self.criterion(x_vgg["relu4_1"], y_vgg["relu4_1"])
-        content_loss += self.weights[4] * self.criterion(x_vgg["relu5_1"], y_vgg["relu5_1"])
+        content_loss += self.weights[0] * self.criterion(
+            x_vgg["relu1_1"], y_vgg["relu1_1"]
+        )
+        content_loss += self.weights[1] * self.criterion(
+            x_vgg["relu2_1"], y_vgg["relu2_1"]
+        )
+        content_loss += self.weights[2] * self.criterion(
+            x_vgg["relu3_1"], y_vgg["relu3_1"]
+        )
+        content_loss += self.weights[3] * self.criterion(
+            x_vgg["relu4_1"], y_vgg["relu4_1"]
+        )
+        content_loss += self.weights[4] * self.criterion(
+            x_vgg["relu5_1"], y_vgg["relu5_1"]
+        )
 
         return content_loss
 

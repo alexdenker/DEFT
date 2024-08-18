@@ -61,14 +61,18 @@ class UnetSkipConnectionBlock(nn.Module):
             use_bias = norm_layer == nn.InstanceNorm2d
         if input_nc is None:
             input_nc = outer_nc
-        downconv = nn.Conv2d(input_nc, inner_nc, kernel_size=4, stride=2, padding=1, bias=use_bias)
+        downconv = nn.Conv2d(
+            input_nc, inner_nc, kernel_size=4, stride=2, padding=1, bias=use_bias
+        )
         downrelu = nn.LeakyReLU(0.2, True)
         downnorm = norm_layer(inner_nc)
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(outer_nc)
 
         if outermost:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1)
+            upconv = nn.ConvTranspose2d(
+                inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1
+            )
             # upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
             # upconv = DoubleConv(inner_nc * 2, outer_nc)
             up = [uprelu, upconv, nn.Tanh()]
@@ -77,7 +81,14 @@ class UnetSkipConnectionBlock(nn.Module):
             self.submodule = submodule
             self.up = nn.Sequential(*up)
         elif innermost:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1, bias=use_bias)
+            upconv = nn.ConvTranspose2d(
+                inner_nc * 2,
+                outer_nc,
+                kernel_size=4,
+                stride=2,
+                padding=1,
+                bias=use_bias,
+            )
             # upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
             # upconv = DoubleConv(inner_nc * 2, outer_nc)
             down = [downrelu, downconv]
@@ -85,7 +96,14 @@ class UnetSkipConnectionBlock(nn.Module):
             self.down = nn.Sequential(*down)
             self.up = nn.Sequential(*up)
         else:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1, bias=use_bias)
+            upconv = nn.ConvTranspose2d(
+                inner_nc * 2,
+                outer_nc,
+                kernel_size=4,
+                stride=2,
+                padding=1,
+                bias=use_bias,
+            )
             # upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
             # upconv = DoubleConv(inner_nc * 2, outer_nc)
             down = [downrelu, downconv, downnorm]
@@ -98,12 +116,13 @@ class UnetSkipConnectionBlock(nn.Module):
             self.up = nn.Sequential(*up)
 
     def forward(self, x, noise):
-
         if self.outermost:
             return self.up(self.submodule(self.down(x), noise))
         elif self.innermost:  # add skip connections
             if noise is None:
                 noise = torch.randn((1, 512, 8, 8)).cuda() * 0.0007
-            return torch.cat((self.up(torch.cat((self.down(x), noise), dim=1)), x), dim=1)
+            return torch.cat(
+                (self.up(torch.cat((self.down(x), noise), dim=1)), x), dim=1
+            )
         else:
             return torch.cat((self.up(self.submodule(self.down(x), noise)), x), dim=1)

@@ -21,18 +21,28 @@ class ImageDeblur:
         self.laplace_penalty = HyperLaplacianPenalty(3, 0.66).cuda()
 
         self.kernel_wizard = KernelWizard(opt["KernelWizard"]).cuda()
-        self.kernel_wizard.load_state_dict(torch.load(opt["KernelWizard"]["pretrained"]))
+        self.kernel_wizard.load_state_dict(
+            torch.load(opt["KernelWizard"]["pretrained"])
+        )
 
         for k, v in self.kernel_wizard.named_parameters():
             v.requires_grad = False
 
     def reset_optimizers(self):
-        self.x_optimizer = torch.optim.Adam(self.x_dip.parameters(), lr=self.opt["x_lr"])
-        self.k_optimizer = torch.optim.Adam(self.k_dip.parameters(), lr=self.opt["k_lr"])
+        self.x_optimizer = torch.optim.Adam(
+            self.x_dip.parameters(), lr=self.opt["x_lr"]
+        )
+        self.k_optimizer = torch.optim.Adam(
+            self.k_dip.parameters(), lr=self.opt["k_lr"]
+        )
 
-        self.x_scheduler = StepLR(self.x_optimizer, step_size=self.opt["num_iters"] // 5, gamma=0.7)
+        self.x_scheduler = StepLR(
+            self.x_optimizer, step_size=self.opt["num_iters"] // 5, gamma=0.7
+        )
 
-        self.k_scheduler = StepLR(self.k_optimizer, step_size=self.opt["num_iters"] // 5, gamma=0.7)
+        self.k_scheduler = StepLR(
+            self.k_optimizer, step_size=self.opt["num_iters"] // 5, gamma=0.7
+        )
 
     def prepare_DIPs(self):
         # x is stand for the sharp image, k is stand for the kernel
@@ -50,7 +60,9 @@ class ImageDeblur:
 
         for step in tqdm(range(self.opt["num_warmup_iters"])):
             self.x_optimizer.zero_grad()
-            dip_zx_rand = self.dip_zx + reg_noise_std * torch.randn_like(self.dip_zx).cuda()
+            dip_zx_rand = (
+                self.dip_zx + reg_noise_std * torch.randn_like(self.dip_zx).cuda()
+            )
             x = self.x_dip(dip_zx_rand)
 
             loss = self.mse(x, warmup_x)
@@ -60,7 +72,9 @@ class ImageDeblur:
         print("Warming up k DIP")
         for step in tqdm(range(self.opt["num_warmup_iters"])):
             self.k_optimizer.zero_grad()
-            dip_zk_rand = self.dip_zk + reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            dip_zk_rand = (
+                self.dip_zk + reg_noise_std * torch.randn_like(self.dip_zk).cuda()
+            )
             k = self.k_dip(dip_zk_rand)
 
             loss = self.mse(k, warmup_k)

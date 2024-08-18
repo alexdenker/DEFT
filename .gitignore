@@ -7,6 +7,9 @@ dist/
 !_configs/dist/
 wandb/
 finetuning/
+datasets/data/imagenet-o
+benchmark/
+imagenet_freeform_masks.npz
 
 src/
 

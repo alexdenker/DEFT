@@ -76,10 +76,15 @@ def set_random_seed(seed):
     torch.cuda.manual_seed_all(seed)
 
 
-def setup_logger(logger_name, root, phase, level=logging.INFO, screen=False, tofile=False):
+def setup_logger(
+    logger_name, root, phase, level=logging.INFO, screen=False, tofile=False
+):
     """set up logger"""
     lg = logging.getLogger(logger_name)
-    formatter = logging.Formatter("%(asctime)s.%(msecs)03d - %(levelname)s: %(message)s", datefmt="%y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        "%(asctime)s.%(msecs)03d - %(levelname)s: %(message)s",
+        datefmt="%y-%m-%d %H:%M:%S",
+    )
     lg.setLevel(level)
     if tofile:
         log_file = os.path.join(root, phase + "_{}.log".format(get_timestamp()))
@@ -173,14 +178,16 @@ def ssim(img1, img2):
 
     mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]  # valid
     mu2 = cv2.filter2D(img2, -1, window)[5:-5, 5:-5]
-    mu1_sq = mu1 ** 2
-    mu2_sq = mu2 ** 2
+    mu1_sq = mu1**2
+    mu2_sq = mu2**2
     mu1_mu2 = mu1 * mu2
-    sigma1_sq = cv2.filter2D(img1 ** 2, -1, window)[5:-5, 5:-5] - mu1_sq
-    sigma2_sq = cv2.filter2D(img2 ** 2, -1, window)[5:-5, 5:-5] - mu2_sq
+    sigma1_sq = cv2.filter2D(img1**2, -1, window)[5:-5, 5:-5] - mu1_sq
+    sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
     sigma12 = cv2.filter2D(img1 * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
 
-    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / (
+        (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
+    )
     return ssim_map.mean()
 
 
@@ -234,7 +241,9 @@ class ProgressBar(object):
     def start(self):
         if self.task_num > 0:
             sys.stdout.write(
-                "[{}] 0/{}, elapsed: 0s, ETA:\n{}\n".format(" " * self.bar_width, self.task_num, "Start...")
+                "[{}] 0/{}, elapsed: 0s, ETA:\n{}\n".format(
+                    " " * self.bar_width, self.task_num, "Start..."
+                )
             )
         else:
             sys.stdout.write("completed: 0, elapsed: 0s")
@@ -257,21 +266,27 @@ class ProgressBar(object):
             sys.stdout.write(
                 "[{}] {}/{}, {:.1f} task/s, \
                     elapsed: {}s, ETA: {:5}s\n{}\n".format(
-                    bar_chars, self.completed, self.task_num, fps, int(elapsed + 0.5), eta, msg
+                    bar_chars,
+                    self.completed,
+                    self.task_num,
+                    fps,
+                    int(elapsed + 0.5),
+                    eta,
+                    msg,
                 )
             )
         else:
             sys.stdout.write(
                 "completed: {}, elapsed: \
-                    {}s, {:.1f} tasks/s".format(
-                    self.completed, int(elapsed + 0.5), fps
-                )
+                    {}s, {:.1f} tasks/s".format(self.completed, int(elapsed + 0.5), fps)
             )
         sys.stdout.flush()
 
 
 def img2tensor(img):
-    return torch.from_numpy(np.ascontiguousarray(np.transpose(img / 255.0, (2, 0, 1)))).float()
+    return torch.from_numpy(
+        np.ascontiguousarray(np.transpose(img / 255.0, (2, 0, 1)))
+    ).float()
 
 
 def fill_noise(x, noise_type):

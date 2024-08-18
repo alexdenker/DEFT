@@ -1,7 +1,8 @@
 import functools
 
 import sys
-sys.path.append('/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm/bkse')
+
+sys.path.append("/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm/bkse")
 import bkse.models.arch_util as arch_util
 import torch
 import torch.nn as nn
@@ -41,7 +42,7 @@ class KernelExtractor(nn.Module):
 
         n_downsampling = 5
         for i in range(n_downsampling):  # add downsampling layers
-            mult = 2 ** i
+            mult = 2**i
             inc = min(nf * mult, output_nc)
             ouc = min(nf * mult * 2, output_nc)
             model += [
@@ -66,7 +67,9 @@ class KernelExtractor(nn.Module):
     def forward(self, sharp, blur):
         output = self.model(torch.cat((sharp, blur), dim=1))
         if self.use_vae:
-            return output[:, : self.kernel_dim, :, :], output[:, self.kernel_dim :, :, :]
+            return output[:, : self.kernel_dim, :, :], output[
+                :, self.kernel_dim :, :, :
+            ]
 
         return output, torch.zeros_like(output).cuda()
 
@@ -82,7 +85,12 @@ class KernelAdapter(nn.Module):
 
         # construct unet structure
         unet_block = UnetSkipConnectionBlock(
-            ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True
+            ngf * 8,
+            ngf * 8,
+            input_nc=None,
+            submodule=None,
+            norm_layer=norm_layer,
+            innermost=True,
         )
         # gradually reduce the number of filters from ngf * 8 to ngf
         unet_block = UnetSkipConnectionBlock(
@@ -91,9 +99,16 @@ class KernelAdapter(nn.Module):
         unet_block = UnetSkipConnectionBlock(
             ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer
         )
-        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(
+            ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer
+        )
         self.model = UnetSkipConnectionBlock(
-            output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer
+            output_nc,
+            ngf,
+            input_nc=input_nc,
+            submodule=unet_block,
+            outermost=True,
+            norm_layer=norm_layer,
         )
 
     def forward(self, x, k):

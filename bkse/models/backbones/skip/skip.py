@@ -62,7 +62,6 @@ def skip(
 
     input_depth = num_input_channels
     for i in range(len(num_channels_down)):
-
         deeper = nn.Sequential()
         skip = nn.Sequential()
 
@@ -72,11 +71,22 @@ def skip(
             model_tmp.add(deeper)
 
         model_tmp.add(
-            nn.BatchNorm2d(num_channels_skip[i] + (num_channels_up[i + 1] if i < last_scale else num_channels_down[i]))
+            nn.BatchNorm2d(
+                num_channels_skip[i]
+                + (num_channels_up[i + 1] if i < last_scale else num_channels_down[i])
+            )
         )
 
         if num_channels_skip[i] != 0:
-            skip.add(get_conv(input_depth, num_channels_skip[i], filter_skip_size, bias=need_bias, pad=pad))
+            skip.add(
+                get_conv(
+                    input_depth,
+                    num_channels_skip[i],
+                    filter_skip_size,
+                    bias=need_bias,
+                    pad=pad,
+                )
+            )
             skip.add(nn.BatchNorm2d(num_channels_skip[i]))
             skip.add(get_activation(act_fun))
 
@@ -97,7 +107,15 @@ def skip(
         deeper.add(get_activation(act_fun))
         if i > 1:
             deeper.add(NONLocalBlock2D(in_channels=num_channels_down[i]))
-        deeper.add(get_conv(num_channels_down[i], num_channels_down[i], filter_size_down[i], bias=need_bias, pad=pad))
+        deeper.add(
+            get_conv(
+                num_channels_down[i],
+                num_channels_down[i],
+                filter_size_down[i],
+                bias=need_bias,
+                pad=pad,
+            )
+        )
         deeper.add(nn.BatchNorm2d(num_channels_down[i]))
         deeper.add(get_activation(act_fun))
 
@@ -113,20 +131,33 @@ def skip(
         deeper.add(nn.Upsample(scale_factor=2, mode=upsample_mode[i]))
 
         model_tmp.add(
-            get_conv(num_channels_skip[i] + k, num_channels_up[i], filter_size_up[i], 1, bias=need_bias, pad=pad)
+            get_conv(
+                num_channels_skip[i] + k,
+                num_channels_up[i],
+                filter_size_up[i],
+                1,
+                bias=need_bias,
+                pad=pad,
+            )
         )
         model_tmp.add(nn.BatchNorm2d(num_channels_up[i]))
         model_tmp.add(get_activation(act_fun))
 
         if need1x1_up:
-            model_tmp.add(get_conv(num_channels_up[i], num_channels_up[i], 1, bias=need_bias, pad=pad))
+            model_tmp.add(
+                get_conv(
+                    num_channels_up[i], num_channels_up[i], 1, bias=need_bias, pad=pad
+                )
+            )
             model_tmp.add(nn.BatchNorm2d(num_channels_up[i]))
             model_tmp.add(get_activation(act_fun))
 
         input_depth = num_channels_down[i]
         model_tmp = deeper_main
 
-    model.add(get_conv(num_channels_up[0], num_output_channels, 1, bias=need_bias, pad=pad))
+    model.add(
+        get_conv(num_channels_up[0], num_output_channels, 1, bias=need_bias, pad=pad)
+    )
     if need_sigmoid:
         model.add(nn.Sigmoid())
 

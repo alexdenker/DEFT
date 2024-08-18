@@ -30,7 +30,9 @@ class LossBuilder(torch.nn.Module):
         return (gen_im_lr - ref_im).pow(2).mean((1, 2, 3)).clamp(min=self.eps).sum()
 
     def _loss_l1(self, gen_im_lr, ref_im, **kwargs):
-        return 10 * ((gen_im_lr - ref_im).abs().mean((1, 2, 3)).clamp(min=self.eps).sum())
+        return 10 * (
+            (gen_im_lr - ref_im).abs().mean((1, 2, 3)).clamp(min=self.eps).sum()
+        )
 
     # Uses geodesic distance on sphere to sum pairwise distances of the 18 vectors
     def _loss_geocross(self, latent, **kwargs):
@@ -82,7 +84,9 @@ class LossBuilderStyleGAN(LossBuilder):
         return loss, losses
 
     def get_blur_img(self, sharp_img, kernel):
-        return self.D.adaptKernel(self.bicub(sharp_img), kernel).cpu().detach().clamp(0, 1)
+        return (
+            self.D.adaptKernel(self.bicub(sharp_img), kernel).cpu().detach().clamp(0, 1)
+        )
 
 
 class LossBuilderStyleGAN2(LossBuilder):
