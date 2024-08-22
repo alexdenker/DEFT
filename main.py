@@ -81,6 +81,7 @@ def main(cfg):
         n, c, h, w = x.size()
         x, y = x.cuda(), y.cuda()
 
+        # Convert to [0, 1]
         x = preprocess(x)
         ts = get_timesteps(cfg)
 

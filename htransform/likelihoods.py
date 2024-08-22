@@ -22,6 +22,7 @@ rather cheaper approximations to facilitate faster training/sampling.
 
 import io
 import math
+import os
 from pathlib import Path
 
 import numpy as np
@@ -685,5 +686,42 @@ def extend_filter(filter):
     out = torch.zeros((b, c, h_new, w_new), device=filter.device)
     out[:, :, offset_h : h + offset_h, offset_w : w + offset_w] = filter
     return out
-    return out
-    return out
+
+
+def get_likelihood(args, model_config):
+    if args.inversion_task == "sr":  # super resolution
+        scale = round(args.forward_op.scale)
+        return Superresolution(
+            scale=scale, sigma_y=args.forward_op.noise_std, device=args.device
+        )
+
+    elif args.inversion_task == "blur":
+        return NonLinearBlur(
+            opt_yml_path=args.forward_op.opt_yml_path,
+            current_dir=os.getcwd(),
+            device=args.device,
+        )
+
+    elif args.inversion_task == "ct":
+        return Radon(
+            num_angles=args.forward_op.num_angles,
+            sigma_y=args.forward_op.noise_std,
+            image_size=model_config.data.image_size,
+            device=args.device,
+        )
+    elif args.inversion_task == "phase_retrieval":
+        return PhaseRetrieval(
+            oversample=args.forward_op.oversample,
+            sigma_y=args.forward_op.noise_std,
+            device=args.device,
+        )
+    elif args.inversion_task == "inp":
+        return InPainting(
+            sigma_y=args.forward_op.noise_std,
+            mask_filename=args.forward_op.mask_filename,
+            device=args.device,
+        )
+    elif args.inversion_task == "hdr":
+        return HDR(sigma_y=args.forward_op.noise_std, device=args.device)
+    else:
+        raise NotImplementedError
