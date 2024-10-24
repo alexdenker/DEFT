@@ -143,3 +143,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+.ruff_cache
+.vscode

@@ -36,7 +36,7 @@ class DEFT:
         log_dir,
         device,
     ):
-        self.samplepretrained_model = create_model(**vars(model_config.model))
+        self.pretrained_model = create_model(**vars(model_config.model))
         self.pretrained_model.convert_to_fp32()
         self.pretrained_model.dtype = torch.float32
         self.pretrained_model.load_state_dict(torch.load(model_config.data.model_path))
