@@ -16,6 +16,43 @@ speedups of up to 1.6x, while having the best perceptual quality on natural imag
 
 ## Getting Started
 
+First, we install `uv` to manage all dependencies. See the [uv documentation](https://docs.astral.sh/uv/getting-started/) for more details. As an example on macOS and Linux, you can run 
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Once `uv` is installed, you can run `uv sync` to install all dependencies, which will create a `.venv` in the directory. Now, for running any python script, you can run `uv run <script> <args>`.
+
+### Super-resolution Example 
+
+```bash
+uv run main.py \
+algo=deft \
+algo.deg=sr4 \
+exp.name=sr4_deft \
+algo.finetune_args.batch_size=16 \
+algo.finetune_args.epochs=200 \
+algo.finetune_args.lr=0.0005 \
+algo.val_args.batch_size=10 \
+algo.val_args.sample_freq=5 \
+exp.overwrite=True \
+exp.samples_root=samples \
+exp.save_deg=True \
+exp.save_evolution=True \
+exp.save_ori=True \
+exp.seed=3 \
+exp.smoke_test=-1 \
+htransform_model.in_channels=9 \
+htransform_model.num_channels=32 \
+htransform_model.num_head_channels=16 \
+htransform_model.out_channels=3 \
+likelihood.forward_op.noise_std=0.0 \
+likelihood.forward_op.scale=4.0 \
+loader=imagenet256_ddrmpp \
+loader.batch_size=10 \
+dist.num_processes_per_node=1
+```
+
 ### Inpainting Example 
 
 ```
