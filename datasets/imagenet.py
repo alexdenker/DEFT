@@ -104,7 +104,14 @@ class ImageNet(torchvision.datasets.ImageFolder):
                     if self.split == "custom":
                         idx = idx[:-5] + ".png"
                     path = os.path.join(self.split_folder, idx)
-                    label = int(line.split()[1])
+                    if len(line.split()) == 1:
+                        nid = line.split("/")[0]
+                        label = wnid_to_classes[nid]
+                        # TODO: A cleaner way to get int labels when file doesn't contain it.
+                        label = 0
+                    else:
+                        label = int(line.split()[1])
+
                     self.samples.append((path, label))
 
             self.targets = [s[1] for s in self.samples]

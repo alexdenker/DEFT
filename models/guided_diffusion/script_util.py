@@ -3,7 +3,8 @@ import inspect
 
 # from . import gaussian_diffusion as gd
 # from .respace import SpacedDiffusion, space_timesteps
-from .unet import SuperResModel, UNetModel, EncoderUNetModel
+from .unet import EncoderUNetModel, SuperResModel, UNetModel
+from .unet_cond import CondUNetModel
 
 NUM_CLASSES = 1000
 
@@ -130,6 +131,8 @@ def create_model_and_diffusion(
 def create_model(
     image_size,
     num_channels,
+    in_channels,
+    out_channels,
     num_res_blocks,
     channel_mult="",
     learn_sigma=False,
@@ -144,6 +147,10 @@ def create_model(
     resblock_updown=False,
     use_fp16=False,
     use_new_attention_order=False,
+    return_cond_model=False,
+    use_residual=False,
+    epsilon_based=False,
+    init_scaling_bias=0.01,
     **kwargs,
 ):
     if channel_mult == "":
@@ -164,11 +171,16 @@ def create_model(
     for res in attention_resolutions.split(","):
         attention_ds.append(image_size // int(res))
 
-    return UNetModel(
+    if return_cond_model:
+        model = CondUNetModel
+    else:
+        model = UNetModel
+
+    return model(
         image_size=image_size,
-        in_channels=3,
+        in_channels=in_channels,
         model_channels=num_channels,
-        out_channels=(3 if not learn_sigma else 6),
+        out_channels=out_channels,
         num_res_blocks=num_res_blocks,
         attention_resolutions=tuple(attention_ds),
         dropout=dropout,
@@ -182,6 +194,10 @@ def create_model(
         use_scale_shift_norm=use_scale_shift_norm,
         resblock_updown=resblock_updown,
         use_new_attention_order=use_new_attention_order,
+        use_residual=use_residual,
+        epsilon_based=epsilon_based,
+        init_scaling_bias=init_scaling_bias,
+        learn_sigma=learn_sigma,
     )
 
 
@@ -451,4 +467,5 @@ def str2bool(v):
     elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
+        raise argparse.ArgumentTypeError("boolean value expected")
         raise argparse.ArgumentTypeError("boolean value expected")

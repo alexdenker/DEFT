@@ -1,0 +1,5 @@
+name: ct
+
+forward_op:
+  num_angles: 60
+  noise_std: 0.1

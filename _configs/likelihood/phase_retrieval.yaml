@@ -1,0 +1,5 @@
+name: phase_retrieval
+
+forward_op:
+  oversample: 2.0
+  noise_std: 0.0

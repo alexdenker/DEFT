@@ -1,16 +1,10 @@
 """
 Adapted from Dival
 """
-import numpy as np
 from dival import get_standard_dataset
 from torch import Tensor
 from torch.nn.functional import interpolate
 from torch.utils.data import DataLoader
-
-np.object = object
-
-
-np.int = np.int64
 
 
 class LoDoPabDatasetFromDival:

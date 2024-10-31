@@ -1,0 +1,7 @@
+name: inp
+
+forward_op:
+  noise_std: 0.1
+  mask_filename: "imagenet_freeform_masks.npz"
+  min_mask_size: 60
+  max_mask_size: 120

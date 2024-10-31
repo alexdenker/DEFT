@@ -103,4 +103,5 @@ def ckpt_path_adm(name, cfg):
     if not os.path.exists(ckpt):
         logger.info(URL_MAP[name])
         download(URL_MAP[name], ckpt)
+
     return ckpt

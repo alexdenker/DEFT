@@ -2,12 +2,15 @@
 
 defaults:
 - dataset: imagenet256_val
+- finetune_dataset: imagenet256_finetune
 - loader: imagenet256_ddrm
 - model: imagenet256_uncond
+- htransform_model: imagenet256_htransform
 - classifier: none
 - dist: localhost
 - exp: default
 - diffusion: linear1000
-- algo: ddim
+- algo: deft
+- likelihood: sr4
 - wandb_config: shreyaspadhy
 - _self_

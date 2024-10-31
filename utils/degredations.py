@@ -895,7 +895,7 @@ def build_one_degredation_model(cfg, h, w, c, deg: str):
         # current_dir = os.getcwd()
 
         # current_dir = '/lustre/fsw/nvresearch/mmardani/source/latent-diffusion-sampling/pgdm'
-        current_dir = "/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm"
+        current_dir = os.getcwd()
 
         opt_yml_path = os.path.join(
             current_dir, "bkse/options/generate_blur/default.yml"
@@ -1028,10 +1028,10 @@ class NonlinearBlurOperator(NonLinearOperator, H_functions):
                 "pretrained"
             ]  # this nees to be changed to the original one
             # model_path = os.path.join(os.dirname(os.dirname(opt_yml_path)), model_path)
-            # current_dir = os.getcwd()
+            current_dir = os.getcwd()
             # current_dir = '/lustre/fsw/nvresearch/mmardani/source/latent-diffusion-sampling/pgdm'
             # current_dir = '/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm'
-            # model_path = os.path.join(current_dir, model_path)
+            model_path = os.path.join(current_dir, model_path)
             print("model_path", model_path)
         blur_model = KernelWizard(opt)
         blur_model.eval()
