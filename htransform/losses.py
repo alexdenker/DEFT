@@ -32,7 +32,7 @@ def epsilon_based_loss_fn_finetuning(
     # z is unbounded
     z = torch.randn_like(x)
 
-    # x is in [0, 1]
+    # x is in [-1, 1]
     xi = alpha_t.sqrt() * x + (1 - alpha_t).sqrt() * z
 
     with torch.no_grad():
