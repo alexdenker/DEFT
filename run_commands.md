@@ -44,17 +44,23 @@ algo.val_args.sample_freq=5 \
 exp.overwrite=True \
 exp.samples_root=samples \
 exp.save_deg=True \
-exp.save_evolution=True \
+exp.save_evolution=False \
 exp.save_ori=True \
 exp.seed=3 \
 exp.smoke_test=-1 \
 htransform_model.in_channels=9 \
-htransform_model.num_channels=32 \
+htransform_model.num_channels=64 \
 htransform_model.num_head_channels=16 \
 htransform_model.out_channels=3 \
 likelihood.forward_op.noise_std=0.0 \
 likelihood.forward_op.scale=4.0 \
 loader=imagenet256_ddrmpp \
 loader.batch_size=10 \
-dist.num_processes_per_node=1
+dist.num_processes_per_node=1 \
+wandb_config.log=True \
+htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_a6365por/model_80.pt
+```
+
+```bash
+uv run eval/eval.py save_path=outputs/samples/sr4_deft/
 ```

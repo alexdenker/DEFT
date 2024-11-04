@@ -4,6 +4,7 @@ _target_: models.guided_diffusion.script_util.create_model
 attention_resolutions: "32,16"
 channel_mult: ""
 class_cond: false
+ckpt_path: null
 dropout: 0.0
 epsilon_based: true
 image_size: 256

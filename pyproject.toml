@@ -21,6 +21,8 @@ dependencies = [
     "ema-pytorch>=0.7.3",
     "odl>=0.7.0",
     "dival>=0.6.1",
+    "clean-fid>=0.1.35",
+    "torchmetrics>=1.5.1",
 ]
 
 [build-system]

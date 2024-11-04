@@ -35,6 +35,7 @@ torch.set_printoptions(sci_mode=False)
 
 def main(cfg):
     run_id = wandb.util.generate_id()
+    cfg.run_id = run_id
     wandb_config = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     wandb_kwargs = {
         "project": cfg.wandb_config.project,
@@ -53,14 +54,18 @@ def main(cfg):
         torch.cuda.set_device(dist.get_rank())
 
         logger = get_logger(name="main", cfg=cfg)
-        logger.info(f"Experiment name is {cfg.exp.name}")
+        if cfg.wandb_config.log:
+            exp_name = f"{cfg.exp.name}_{run_id}"
+        else:
+            exp_name = cfg.exp.name
+        logger.info(f"Experiment name is {exp_name}")
         exp_root = cfg.exp.root
         samples_root = cfg.exp.samples_root
-        exp_name = cfg.exp.name
         samples_root = os.path.join(exp_root, samples_root, exp_name)
+
         dataset_name = cfg.dataset.name
         if dist.get_rank() == 0:
-            if cfg.exp.overwrite:
+            if cfg.exp.overwrite and cfg.htransform_model.ckpt_path is None:
                 if os.path.exists(samples_root):
                     shutil.rmtree(samples_root)
                 os.makedirs(samples_root)
@@ -68,6 +73,9 @@ def main(cfg):
                 if not os.path.exists(samples_root):
                     os.makedirs(samples_root)
 
+        # Save the hydra config
+        with open(os.path.join(samples_root, "config.yaml"), "w") as f:
+            OmegaConf.save(config=cfg, f=f.name)
         model, classifier, htransform_model = build_model(cfg)
         model.eval()
         if classifier is not None:
@@ -77,7 +85,7 @@ def main(cfg):
 
         diffusion = Diffusion(**cfg.diffusion)
 
-        if htransform_model is not None:
+        if "deft" in cfg.algo.name:
             likelihood = get_likelihood(cfg, device=model.device)
 
             cg_model = HTransformModel(
@@ -98,8 +106,10 @@ def main(cfg):
             H = algo.H
 
         ########################## DO FINETUNING IF NEEDED ##########
-        if cfg.algo.name == "deft":
+        print(cfg.htransform_model.ckpt_path)
+        if cfg.algo.name == "deft" and cfg.htransform_model.ckpt_path is None:
             algo.train()
+
         ########################## DO EVAL ##########################
         psnrs = []
         start_time = time.time()
@@ -107,6 +117,7 @@ def main(cfg):
             if cfg.exp.smoke_test > 0 and it >= cfg.exp.smoke_test:
                 break
             # Images are in [0, 1]
+            # y here is the label of imagenet that class_cond models occasionally need.
             x, y = x.cuda(), y.cuda()
 
             # Convert from [0, 1] to [-1, 1]
@@ -114,6 +125,7 @@ def main(cfg):
             ts = get_timesteps(cfg)
 
             kwargs = info
+            # TODO: Can we combine the likelihood forward pass for all algorithms?
             if (
                 "ddrm" in cfg.algo.name
                 or "mcg" in cfg.algo.name
@@ -127,13 +139,29 @@ def main(cfg):
                 y_0 = H.H(x)
 
                 # This is to account for scaling to [-1, 1]
+                # y_0 is the degradation that we consider
                 y_0 = (
                     y_0 + torch.randn_like(y_0) * cfg.algo.sigma_y * 2
                 )  # ?? what is it for???
                 kwargs["y_0"] = y_0
+            elif "deft" in cfg.algo.name:
+                if "inp" in cfg.algo.deg or "in2" in cfg.algo.deg:
+                    y_0, masks = algo.model.likelihood.sample(
+                        x,
+                        deterministic_idx=torch.arange(0, x.shape[0])
+                        .long()
+                        .to(algo.device),
+                    )
+                else:
+                    y_0 = algo.model.likelihood.sample(x)
+                    masks = None
+                kwargs["masks"] = masks
+                kwargs["y_0"] = y_0
 
             # pgdm
             if cfg.exp.save_evolution:
+                if cfg.algo.name == "deft":
+                    raise NotImplementedError("DEFT does not support evolution saving")
                 xt_s, _, xt_vis, _, mu_fft_abs_s, mu_fft_ang_s = algo.sample(
                     x, y, ts, **kwargs
                 )
