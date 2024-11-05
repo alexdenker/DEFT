@@ -28,7 +28,7 @@ def main(cfg: DictConfig):
     cfg.dataset.split = "custom"
     cfg.dataset.subset_txt = train_cfg.dataset.subset_txt
 
-    run_id = train_cfg.exp.get("run_id", None)
+    run_id = train_cfg.get("run_id", None)
     exp_name = f"{train_cfg.exp.name}_{run_id}" if run_id else train_cfg.exp.name
 
     original_save_path = cfg.save_path

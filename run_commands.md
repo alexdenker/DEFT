@@ -62,5 +62,9 @@ htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_a6365p
 ```
 
 ```bash
-uv run eval/eval.py save_path=outputs/samples/sr4_deft/
+uv run eval.py \
+save_path=outputs/samples/sr4_deft_8fi2wuj3/ \
+dist.num_processes_per_node=1 \
+dist.port=12356 \
+wandb_config.log=True
 ```

@@ -180,7 +180,9 @@ class DEFT:
                         end_step=0,
                         num_steps=self.cfg.algo.val_args.num_steps,
                     )
-                    self.sample(x, y, ts, masks=masks, use_ema=True, y_0=y_0)
+                    self.sample(
+                        x, y, ts, masks=masks, use_ema=True, y_0=y_0, log_images=True
+                    )
 
         # always save last model
         torch.save(
@@ -203,11 +205,9 @@ class DEFT:
         masks = kwargs.get("masks", None)
         use_ema = kwargs.get("use_ema", False)
         y_0 = kwargs.get("y_0", None)
+        log_images = kwargs.get("log_images", False)
 
         x = x.to(self.device)
-        # If rank of y is 1, then we need to expand it to match the rank of x
-        if y_0.ndim == 1:
-            y_0 = y_0.unsqueeze(0).expand(x.shape[0], -1)
 
         ATy = self.get_adjoint(x, y_0)
         with torch.no_grad():
@@ -285,80 +285,83 @@ class DEFT:
         x = postprocess(x)
         y_0 = postprocess(y_0)
 
-        for i in range(sample.shape[0]):
-            fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(16, 6))
+        if log_images:
+            for i in range(sample.shape[0]):
+                fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(16, 6))
 
-            if x.shape[1] == 3:
-                # NOTE: Imshow needs images in [0, 1]
-                ax1.set_title("ground truth")
-                ax1.imshow(x[i, :, :, :].permute(1, 2, 0).cpu().detach().numpy())
-                ax1.axis("off")
+                if x.shape[1] == 3:
+                    # NOTE: Imshow needs images in [0, 1]
+                    ax1.set_title("ground truth")
+                    ax1.imshow(x[i, :, :, :].permute(1, 2, 0).cpu().detach().numpy())
+                    ax1.axis("off")
 
-                ax2.set_title("y")
-                ax2.imshow(y_0[i, :, :, :].permute(1, 2, 0).cpu().numpy())
-                ax2.axis("off")
+                    ax2.set_title("y")
+                    ax2.imshow(y_0[i, :, :, :].permute(1, 2, 0).cpu().numpy())
+                    ax2.axis("off")
 
-                ax3.set_title("cheap_guidance")
-                ax3.imshow((ATy[i, :, :, :].permute(1, 2, 0).cpu().numpy() + 1) / 2)
-                ax3.axis("off")
+                    ax3.set_title("cheap_guidance")
+                    ax3.imshow((ATy[i, :, :, :].permute(1, 2, 0).cpu().numpy() + 1) / 2)
+                    ax3.axis("off")
 
-                ax4.set_title("sample")
-                ax4.imshow(sample[i, :, :, :].permute(1, 2, 0).cpu().numpy())
-                ax4.axis("off")
-                if use_ema:
-                    ax5.set_title("sample_ema")
-                    ax5.imshow(sample_ema[i, :, :, :].permute(1, 2, 0).cpu().numpy())
-                    ax5.axis("off")
+                    ax4.set_title("sample")
+                    ax4.imshow(sample[i, :, :, :].permute(1, 2, 0).cpu().numpy())
+                    ax4.axis("off")
+                    if use_ema:
+                        ax5.set_title("sample_ema")
+                        ax5.imshow(
+                            sample_ema[i, :, :, :].permute(1, 2, 0).cpu().numpy()
+                        )
+                        ax5.axis("off")
 
-            else:
-                ax1.set_title("ground truth")
-                ax1.imshow(x[i, 0, :, :].cpu().numpy(), cmap="gray")
-                ax1.axis("off")
+                else:
+                    ax1.set_title("ground truth")
+                    ax1.imshow(x[i, 0, :, :].cpu().numpy(), cmap="gray")
+                    ax1.axis("off")
 
-                ax2.set_title("y")
-                ax2.imshow(y_0[i, 0, :, :].cpu().numpy().T, cmap="gray")
-                ax2.axis("off")
+                    ax2.set_title("y")
+                    ax2.imshow(y_0[i, 0, :, :].cpu().numpy().T, cmap="gray")
+                    ax2.axis("off")
 
-                ax3.set_title("A.T(y)")
-                ax3.imshow(ATy[i, 0, :, :].cpu().numpy(), cmap="gray")
-                ax3.axis("off")
+                    ax3.set_title("A.T(y)")
+                    ax3.imshow(ATy[i, 0, :, :].cpu().numpy(), cmap="gray")
+                    ax3.axis("off")
 
-                ax4.set_title("sample")
-                ax4.imshow(sample[i, 0, :, :].cpu().numpy(), cmap="gray")
-                ax4.axis("off")
-                if use_ema:
-                    ax5.set_title("sample ema")
-                ax5.imshow(sample_ema[i, 0, :, :].cpu().numpy(), cmap="gray")
-                ax5.axis("off")
+                    ax4.set_title("sample")
+                    ax4.imshow(sample[i, 0, :, :].cpu().numpy(), cmap="gray")
+                    ax4.axis("off")
+                    if use_ema:
+                        ax5.set_title("sample ema")
+                        ax5.imshow(sample_ema[i, 0, :, :].cpu().numpy(), cmap="gray")
+                        ax5.axis("off")
 
-            wandb.log({f"samples/{i}": wandb.Image(plt)})
-            plt.close()
+                wandb.log({f"samples/{i}": wandb.Image(plt)})
+                plt.close()
 
-        # Calculate PSNR on validation batch, to have some metric to compare
-        # NOTE: This definition of PSNR needs images in [0, 1]
+            # Calculate PSNR on validation batch, to have some metric to compare
+            # NOTE: This definition of PSNR needs images in [0, 1]
 
-        def _get_psnr(sample_, x_):
-            mse = torch.mean(
-                (sample_ - x_) ** 2, dim=(1, 2, 3)
-            )  # keep batch dim for now
-            psnr_ = 10 * torch.log10(1 / (mse + 1e-10))
+            def _get_psnr(sample_, x_):
+                mse = torch.mean(
+                    (sample_ - x_) ** 2, dim=(1, 2, 3)
+                )  # keep batch dim for now
+                psnr_ = 10 * torch.log10(1 / (mse + 1e-10))
 
-            return psnr_
+                return psnr_
 
-        psnr = _get_psnr(sample, x)
-        if use_ema:
-            psnr_ema = _get_psnr(sample_ema, x)
+            psnr = _get_psnr(sample, x)
+            if use_ema:
+                psnr_ema = _get_psnr(sample_ema, x)
+                wandb.log(
+                    {
+                        "val/batch_psnr_ema": np.mean(psnr_ema.cpu().numpy()),
+                    }
+                )
+
             wandb.log(
                 {
-                    "val/batch_psnr_ema": np.mean(psnr_ema.cpu().numpy()),
+                    "val/batch_psnr": np.mean(psnr.cpu().numpy()),
                 }
             )
-
-        wandb.log(
-            {
-                "val/batch_psnr": np.mean(psnr.cpu().numpy()),
-            }
-        )
         # We need to return the sample in the range [-1, 1]
         return preprocess(sample), None
 

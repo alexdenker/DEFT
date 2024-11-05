@@ -37,7 +37,7 @@
             "justMyCode": false
         },
         {
-            "name": "DEFT: SR4 Debug",
+            "name": "DEFT: SR4 Training",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
@@ -51,11 +51,10 @@
                 "algo.finetune_args.lr=0.0005",
                 "algo.val_args.batch_size=10",
                 "algo.val_args.sample_freq=5",
-                "dist.num_processes_per_node=1",
                 "exp.overwrite=True",
                 "exp.samples_root=samples",
                 "exp.save_deg=True",
-                "exp.save_evolution=True",
+                "exp.save_evolution=False",
                 "exp.save_ori=True",
                 "exp.seed=3",
                 "exp.smoke_test=-1",
@@ -67,6 +66,7 @@
                 "likelihood.forward_op.scale=4.0",
                 "loader=imagenet256_ddrmpp",
                 "loader.batch_size=10",
+                "dist.num_processes_per_node=1",
                 "wandb_config.log=True"
             ],
             "console": "integratedTerminal",
