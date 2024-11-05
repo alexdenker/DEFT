@@ -58,8 +58,10 @@ loader=imagenet256_ddrmpp \
 loader.batch_size=10 \
 dist.num_processes_per_node=1 \
 wandb_config.log=True \
-htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_a6365por/model_80.pt
+htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_8fi2wuj3/model.pt
 ```
+
+# TODO: Do sampling and eval with ema model
 
 ```bash
 uv run eval.py \

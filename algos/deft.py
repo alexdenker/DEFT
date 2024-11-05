@@ -136,15 +136,15 @@ class DEFT:
                         self.model.htransform_model.module.state_dict(),
                         os.path.join(self.log_dir, f"model_{epoch}.pt"),
                     )
-
-                torch.save(
-                    self.model.htransform_model.module.state_dict(),
-                    os.path.join(self.log_dir, "model_tmp.pt"),
-                )
-                torch.save(
-                    self.ema.ema_model.module.state_dict(),
-                    os.path.join(self.log_dir, "ema_model_tmp.pt"),
-                )
+                # TODO: Remove
+                # torch.save(
+                #     self.model.htransform_model.module.state_dict(),
+                #     os.path.join(self.log_dir, "model_tmp.pt"),
+                # )
+                # torch.save(
+                #     self.ema.ema_model.module.state_dict(),
+                #     os.path.join(self.log_dir, "ema_model_tmp.pt"),
+                # )
 
             print("Average Loss: {:5f}".format(avg_loss / num_items))
             wandb.log(

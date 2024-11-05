@@ -145,6 +145,8 @@ def main(cfg):
                 )  # ?? what is it for???
                 kwargs["y_0"] = y_0
             elif "deft" in cfg.algo.name:
+                # TODO: Use algo.sigma_y instead of forward_op.noise_std
+                # TODO: remove likelihood configs entirely, specify in algo.deg_args.
                 if "inp" in cfg.algo.deg or "in2" in cfg.algo.deg:
                     y_0, masks = algo.model.likelihood.sample(
                         x,
@@ -210,6 +212,7 @@ def main(cfg):
             psnrs.append(psnr)
 
             if cfg.exp.save_deg:
+                # TODO: x0 using DEFT likelihood
                 xo = postprocess(get_degreadation_image(y_0, H, cfg))
 
                 save_result(dataset_name, xo, y, info, samples_root, "deg")

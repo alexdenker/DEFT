@@ -176,6 +176,9 @@ def create_model(
     else:
         model = UNetModel
 
+    # TODO: If we use x0hat, we need 9 channels, otherwise 6 channels.
+    # TODO: For inpainting we use 9+1(mask) channels.
+
     return model(
         image_size=image_size,
         in_channels=in_channels,
