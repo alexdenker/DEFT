@@ -22,10 +22,13 @@ rather cheaper approximations to facilitate faster training/sampling.
 
 import io
 import math
+import os
+import warnings
 from pathlib import Path
 
 import numpy as np
 import torch
+from omegaconf import DictConfig, OmegaConf
 from torch.nn import functional as F
 
 from radon.tomography import Tomography
@@ -36,7 +39,7 @@ from utils.degredations import SuperResolution as SR
 from utils.fft_utils import fft2_m, ifft2_m
 
 
-def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
+def get_xi_condition(xi, x0hat, y, likelihood, cfg, masks=None):
     """
     For the various inversion tasks, we have slightly different inputs to the model.
 
@@ -67,10 +70,10 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg_model, masks=None):
         or isinstance(likelihood, NonLinearBlur)
     ):
         xi_condition = xi
-        if cfg_model.use_x0hat:
+        if cfg.algo.use_x0hat:
             xi_condition = torch.concat((xi_condition, x0hat), dim=1)
 
-        if cfg_model.use_loggrad:
+        if cfg.algo.use_loggrad:
             cheap_guidance = likelihood.log_likelihood_grad(x=x0hat, y=y)
             xi_condition = torch.concat((xi_condition, cheap_guidance), dim=1)
         else:
@@ -685,5 +688,57 @@ def extend_filter(filter):
     out = torch.zeros((b, c, h_new, w_new), device=filter.device)
     out[:, :, offset_h : h + offset_h, offset_w : w + offset_w] = filter
     return out
-    return out
-    return out
+
+
+def get_likelihood(cfg: DictConfig, device: str):
+    # For a given algo.deg, get the corresponding yaml file from likelihoods/
+    if cfg.algo.deg not in ["sr4", "blur", "ct", "phase_retrieval", "inp", "hdr"]:
+        raise NotImplementedError
+    if cfg.algo.deg != cfg.likelihood.name:
+        warnings.warn(
+            f"algo.deg and likelihood.name are not the same: {cfg.algo.deg} != {cfg.likelihood.name}. Loading likelihood_cfg from likelihood/{cfg.likelihood.name}.yaml"
+        )
+        likelihood_cfg = OmegaConf.load(
+            f"DEFT/_configs/likelihood/{cfg.likelihood.name}.yaml"
+        )
+    else:
+        likelihood_cfg = cfg.likelihood
+
+    if cfg.algo.deg == "sr4":  # super resolution
+        scale = round(likelihood_cfg.forward_op.scale)
+        return Superresolution(
+            scale=scale,
+            sigma_y=likelihood_cfg.forward_op.noise_std,
+            device=device,
+        )
+
+    elif cfg.algo.deg == "blur":
+        return NonLinearBlur(
+            opt_yml_path=likelihood_cfg.forward_op.opt_yml_path,
+            current_dir=os.getcwd(),
+            device=device,
+        )
+
+    elif cfg.algo.deg == "ct":
+        return Radon(
+            num_angles=likelihood_cfg.forward_op.num_angles,
+            sigma_y=likelihood_cfg.forward_op.noise_std,
+            image_size=cfg.data.image_size,
+            device=device,
+        )
+    elif cfg.algo.deg == "phase_retrieval":
+        return PhaseRetrieval(
+            oversample=likelihood_cfg.forward_op.oversample,
+            sigma_y=likelihood_cfg.forward_op.noise_std,
+            device=device,
+        )
+    elif cfg.algo.deg == "inp":
+        return InPainting(
+            sigma_y=likelihood_cfg.forward_op.noise_std,
+            mask_filename=likelihood_cfg.forward_op.mask_filename,
+            device=device,
+        )
+    elif cfg.algo.deg == "hdr":
+        return HDR(sigma_y=likelihood_cfg.forward_op.noise_std, device=device)
+    else:
+        raise NotImplementedError

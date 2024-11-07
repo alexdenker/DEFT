@@ -1,0 +1,29 @@
+# Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved
+
+defaults:
+- dist: localhost
+- dataset: imagenet256_val
+- loader: imagenet256_ddrmpp
+- exp: fid_stats
+- wandb_config: shreyaspadhy
+- _self_
+
+fid:
+  mode: "legacy_pytorch"
+
+dataset:
+  transform: "identity"
+
+save_path: 'none'
+results_save_path: outputs/eval
+mean_std_stats: true
+
+source_kid_stats_path: datasets/data/imagenet256_val_dgp_top1k.npy
+source_fid_stats_path: datasets/data/imagenet256_train_mean_std.npz
+
+psnr:
+  crop_size: 256
+  crop_type: "center"
+
+
+

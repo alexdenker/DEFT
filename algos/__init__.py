@@ -2,6 +2,7 @@
 
 from .ddim import DDIM
 from .ddrm import DDRM
+from .deft import DEFT
 from .dps import DPS
 from .identity import Identity
 from .mcg import MCG
@@ -33,5 +34,7 @@ def build_algo(cg_model, cfg):
         return SDS(cg_model, cfg)
     elif cfg.algo.name == "sds_var":
         return SDS_VAR(cg_model, cfg)
+    elif cfg.algo.name == "deft":
+        return DEFT(cg_model, cfg)
     else:
         raise ValueError(f"No algorithm named {cfg.algo.name}")

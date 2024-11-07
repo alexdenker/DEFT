@@ -1,0 +1,5 @@
+name: sr4
+
+forward_op:
+  noise_std: 0.0
+  scale: 4.0

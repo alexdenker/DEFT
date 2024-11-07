@@ -4,7 +4,7 @@ from cleanfid.fid import frechet_distance, kernel_distance
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 
-from utils.distributed import get_logger, get_results_file, init_processes
+from utils.distributed import get_logger, init_processes
 
 
 def main(cfg: DictConfig):
@@ -27,18 +27,20 @@ def main(cfg: DictConfig):
     else:
         mu2, sigma2 = features2["mu"], features2["sigma"]
 
-    results_file = get_results_file(cfg, logger)
-
-    fid = frechet_distance(mu1, sigma1, mu2, sigma2)
-    logger.info(f"FID: {fid:.4f}")
-    with open(results_file, "a") as f:
-        f.write(f"FID: {fid}\n")
+    results_file = cfg.results
 
     if "npy" in cfg.path1 and "npy" in cfg.path2:
         kid = kernel_distance(features1, features2)
         logger.info(f"KIDx10^3: {kid * 1000:.7f}")
         with open(results_file, "a") as f:
             f.write(f"KID: {kid}\n")
+        return kid
+    else:
+        fid = frechet_distance(mu1, sigma1, mu2, sigma2)
+        logger.info(f"FID: {fid:.4f}")
+        with open(results_file, "a") as f:
+            f.write(f"FID: {fid}\n")
+        return fid
 
 
 @hydra.main(version_base="1.2", config_path="_configs", config_name="fid")

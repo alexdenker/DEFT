@@ -29,7 +29,19 @@ def build_model(cfg):
             device_ids=[dist.get_rank()],
             output_device=[dist.get_rank()],
         )
-
+    if getattr(cfg, "htransform_model", None):
+        htransform_model = call(cfg.htransform_model)
+        htransform_model.cuda(dist.get_rank())
+        if cfg.htransform_model.ckpt_path is not None:
+            htransform_model.load_state_dict(torch.load(cfg.htransform_model.ckpt_path))
+        htransform_model = DDP(
+            htransform_model,
+            device_ids=[dist.get_rank()],
+            output_device=[dist.get_rank()],
+        )
+    else:
+        htransform_model = None
     model.cuda(dist.get_rank())
+
     model = DDP(model, device_ids=[dist.get_rank()], output_device=[dist.get_rank()])
-    return model, classifier
+    return model, classifier, htransform_model

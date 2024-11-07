@@ -1,11 +1,16 @@
 import os
 
+import numpy as np
+import torch
 import torch.distributed as dist
 from torch.utils.data import Dataset
+
+from datasets.aapm import AAPMDataset
 
 # SELENE
 from datasets.ffhq import get_ffhq_dataset, get_ffhq_loader
 from datasets.imagenet import get_imagenet_dataset, get_imagenet_loader
+from datasets.lodopab import LoDoPabDatasetFromDival
 from utils.distributed import get_logger
 
 # LOCAL MACHINE
@@ -26,7 +31,7 @@ class ZipDataset(Dataset):
         return len(self.datasets[0])
 
 
-def build_one_dataset(cfg, dataset_attr="dataset"):
+def build_one_dataset(cfg, dataset_attr="dataset", return_splits=False):
     logger = get_logger("dataset", cfg)
     exp_root = cfg.exp.root
     cfg_dataset = getattr(cfg, dataset_attr)
@@ -43,9 +48,33 @@ def build_one_dataset(cfg, dataset_attr="dataset"):
             overwrite=overwrite, samples_root=samples_root, **cfg_dataset
         )
         dist.barrier()
+
+        if return_splits:
+            # TODO: Add the code to select less than or more than 1000 images to finetune on
+            # Take 100 images to calculate validation metrics on
+            val_dset = torch.utils.data.Subset(dset, np.arange(1, len(dset), 100))
+            # Take 1000 images to finetune on
+            finetune_dset = torch.utils.data.Subset(dset, np.arange(0, len(dset), 10))
+            return finetune_dset, val_dset
     if "FFHQ" in cfg_dataset.name:
         dset = get_ffhq_dataset(**cfg_dataset)
 
+        if return_splits:
+            raise ValueError("FFHQ dataset has no finetune/val splits by default.")
+    if "LoDoPab" in cfg_dataset.name:
+        dset = LoDoPabDatasetFromDival(im_size=256)
+        dset = dset.lodopab_val
+
+        if return_splits:
+            val_dset = torch.utils.data.Subset(dset, np.arange(1, len(dset), 200))
+            return dset, val_dset
+    if "AAPM" in cfg_dataset.name:
+        if not return_splits:
+            raise ValueError("AAPM dataset has finetune/val splits by default.")
+        else:
+            finetune_dset = AAPMDataset(part="val", base_path=cfg_dataset.root)
+            val_dset = AAPMDataset(part="test", base_path=cfg_dataset.root)
+            return finetune_dset, val_dset
     return dset
 
 
