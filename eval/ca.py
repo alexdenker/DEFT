@@ -64,6 +64,8 @@ def main(cfg: DictConfig):
 
     dist.barrier()
 
+    return top1_tot / count_tot
+
 
 @hydra.main(version_base="1.2", config_path="_configs", config_name="ca")
 def main_dist(cfg: DictConfig):

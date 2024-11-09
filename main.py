@@ -11,6 +11,8 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
+from tqdm import tqdm
+
 
 import wandb
 from algos import build_algo
@@ -34,7 +36,11 @@ torch.set_printoptions(sci_mode=False)
 
 
 def main(cfg):
-    run_id = wandb.util.generate_id()
+    if cfg.htransform_model.ckpt_path is None:
+        run_id = wandb.util.generate_id()
+    else:
+        id_str = cfg.htransform_model.ckpt_path.split("/")[-2]
+        run_id = id_str.split("_")[-1]
     cfg.run_id = run_id
     wandb_config = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     wandb_kwargs = {
@@ -113,7 +119,7 @@ def main(cfg):
         ########################## DO EVAL ##########################
         psnrs = []
         start_time = time.time()
-        for it, (x, y, info) in enumerate(loader):
+        for it, (x, y, info) in tqdm(enumerate(loader)):
             if cfg.exp.smoke_test > 0 and it >= cfg.exp.smoke_test:
                 break
             # Images are in [0, 1]

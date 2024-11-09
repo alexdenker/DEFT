@@ -40,6 +40,7 @@ algo.finetune_args.batch_size=16 \
 algo.finetune_args.epochs=200 \
 algo.finetune_args.lr=0.0005 \
 algo.val_args.batch_size=10 \
+algo.val_args.eta=1 \
 algo.val_args.sample_freq=5 \
 exp.overwrite=True \
 exp.samples_root=samples \
@@ -58,10 +59,10 @@ loader=imagenet256_ddrmpp \
 loader.batch_size=10 \
 dist.num_processes_per_node=1 \
 wandb_config.log=True \
-htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_8fi2wuj3/model.pt
+htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_8fi2wuj3/model_old.pt
 ```
 
-# TODO: Do sampling and eval with ema model
+# TODO: Do sampling and eval with ema model.
 
 ```bash
 uv run eval.py \
