@@ -4,6 +4,7 @@ Alexander Denker*, Francisco Vargas*, Shreyas Padhy*, Kieran Didi*, Simon Mathis
 
 **This repository will contain the implementation of DEFT as a fork of RED-diff.**
 
+**The branch refactor is up to date.**
 
 
 ![deft](images/DEFT_Sampling.png)
