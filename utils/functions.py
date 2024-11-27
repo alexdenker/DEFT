@@ -6,12 +6,18 @@ def sigmoid(x):
     return 1 / (np.exp(-x) + 1)
 
 
-def postprocess(x):
+def postprocess(x, clamp=True):
     """Converts images in [-1, 1] to [0, 1]"""
     if isinstance(x, list):
-        return [torch.clamp((v + 1) / 2, 0.0, 1.0) for v in x]
+        if clamp:
+            return [torch.clamp((v + 1) / 2, 0.0, 1.0) for v in x]
+        else:
+            return [(v + 1) / 2 for v in x]
     else:
-        return torch.clamp((x + 1) / 2, 0.0, 1.0)
+        if clamp:
+            return torch.clamp((x + 1) / 2, 0.0, 1.0)
+        else:
+            return (x + 1) / 2
 
 
 def preprocess(x):

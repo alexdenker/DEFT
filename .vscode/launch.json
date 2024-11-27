@@ -50,9 +50,10 @@
                 "algo.finetune_args.epochs=200",
                 "algo.finetune_args.lr=0.0005",
                 "algo.val_args.batch_size=10",
+                "algo.val_args.eta=1",
                 "algo.val_args.sample_freq=5",
                 "exp.overwrite=True",
-                "exp.samples_root=samples",
+                "exp.samples_root=samples_trial",
                 "exp.save_deg=True",
                 "exp.save_evolution=False",
                 "exp.save_ori=True",
@@ -67,7 +68,8 @@
                 "loader=imagenet256_ddrmpp",
                 "loader.batch_size=10",
                 "dist.num_processes_per_node=1",
-                "wandb_config.log=True"
+                "wandb_config.log=False",
+                "htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_8fi2wuj3/model.pt"
             ],
             "console": "integratedTerminal",
             "justMyCode": false

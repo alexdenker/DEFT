@@ -165,6 +165,7 @@ def main(cfg):
                     masks = None
                 kwargs["masks"] = masks
                 kwargs["y_0"] = y_0
+                kwargs["use_ema"] = cfg.algo.val_args.use_ema
 
             # pgdm
             if cfg.exp.save_evolution:
@@ -206,9 +207,9 @@ def main(cfg):
 
             if isinstance(xt_s, list):
                 # Convert from [-1, 1] to [0, 1] for PSNR calculation
-                xo = postprocess(xt_s[0]).cpu()
+                xo = postprocess(xt_s[0], clamp=cfg.algo.name != "deft").cpu()
             else:
-                xo = postprocess(xt_s).cpu()
+                xo = postprocess(xt_s, clamp=cfg.algo.name != "deft").cpu()
 
             save_result(dataset_name, xo, y, info, samples_root, "")
 

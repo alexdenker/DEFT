@@ -16,6 +16,7 @@ val_args:
   psnr_batch_size: 100
   num_steps: 100
   eta: 0.0
+  use_ema: false
   sample_freq: 5
   psnr_sample_freq: -1
 ema:

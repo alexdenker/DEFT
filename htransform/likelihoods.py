@@ -208,6 +208,7 @@ class Superresolution(Likelihood):
     def _sample(self, x: torch.Tensor) -> torch.Tensor:
         y = self.A(x)
 
+        # TODO: Do we also scale sigma_y by 2 here?
         y_noise = y + self.sigma_y * torch.randn_like(y)
 
         return y_noise

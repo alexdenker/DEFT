@@ -61,6 +61,7 @@ class HTransformModel(ClassifierGuidanceModel):
 
         self.init_dataloaders()
 
+    # TODO (alex): Add a function here that does the forward pass for sampling here.
     def init_dataloaders(self):
         finetune_dset, val_dset = build_one_dataset(
             self.cfg, dataset_attr="finetune_dataset", return_splits=True

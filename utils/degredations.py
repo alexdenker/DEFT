@@ -1,3 +1,4 @@
+import io
 import os
 
 import numpy as np
@@ -9,6 +10,7 @@ from torch.nn import functional as F
 from .jpeg_torch import jpeg_decode, jpeg_encode
 
 
+# TODO: Remove likelihoods and add cheap_guidance etc here in H_functions
 class H_functions:
     """
     A class replacing the SVD of a matrix H, perhaps efficiently.
@@ -838,6 +840,44 @@ def build_one_degredation_model(cfg, h, w, c, deg: str):
             # import pdb; pdb.set_trace()
 
         m = torch.from_numpy(m)
+        H = Inpainting2(c, w, m, device)
+    elif deg == "inp_deft":
+        exp_root = cfg.exp.root
+        deg_type = deg.split("_")[-1]
+        masks_root = os.path.join(exp_root, "masks", f"{deg_type}.npz")
+        # m = load_mask(masks_root)
+
+        mask_filename = "/home/sp2058/adapt-diffusions/imagenet_freeform_masks.npz"
+        with open(mask_filename, "rb") as f:
+            data = f.read()
+
+        data = dict(np.load(io.BytesIO(data)))
+
+        for key in data:
+            data[key] = (
+                np.unpackbits(data[key], axis=None)[: np.prod([10000, 256, 256])]
+                .reshape([10000, 256, 256])
+                .astype(np.uint8)
+            )
+
+        m = torch.tensor(data["20-30% freeform"], device=device)
+
+        # Tile m for 3 channels
+        m = m.unsqueeze(1).repeat(1, 3, 1, 1)
+
+        m = 1 - m
+
+        if h != 256 and w != 256:
+            n = m.shape[0]
+            m = np.reshape(m, (n, 3, 256, 256))
+            m = np.repeat(m, w // 256, axis=2)
+            m = np.repeat(m, h // 256, axis=3)
+            m = np.reshape(m, (n, 3 * h * w))
+            # print('m.shape', m.shape)
+            # print('m', m)
+            # import pdb; pdb.set_trace()
+
+        # m = torch.from_numpy(m)
         H = Inpainting2(c, w, m, device)
     elif deg == "deblur_uni":
         H = Deblurring(torch.Tensor([1 / 9] * 9).to("cuda"), c, w, device)

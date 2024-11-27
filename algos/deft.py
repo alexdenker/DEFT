@@ -201,23 +201,27 @@ class DEFT:
         kwargs["y_0"]: [batch_size, 3, 256, 256] the actual degradation we consider
         """
         del y
+        self.model.model.eval()
         self.model.htransform_model.eval()
         masks = kwargs.get("masks", None)
         use_ema = kwargs.get("use_ema", False)
         y_0 = kwargs.get("y_0", None)
         log_images = kwargs.get("log_images", False)
 
+        # [-1, 1]
         x = x.to(self.device)
 
         ATy = self.get_adjoint(x, y_0)
         with torch.no_grad():
-            ts = (
+            ts_for_scaling = (
                 torch.arange(self.diffusion.num_diffusion_timesteps)
                 .to(self.device)
                 .unsqueeze(-1)
             )
 
-            ts_scaling = self.model.htransform_model.module.get_time_scaling(ts)
+            ts_scaling = self.model.htransform_model.module.get_time_scaling(
+                ts_for_scaling
+            )
 
         plt.figure()
         plt.plot(ts_scaling[:, 0].cpu().numpy())
@@ -249,12 +253,6 @@ class DEFT:
             sampler = DDIM(model=guidance_model, cfg=conf)
 
             print("sampling w/ point estimate model")
-            ts = get_timesteps(
-                start_step=1000,
-                end_step=0,
-                num_steps=self.cfg.algo.val_args.num_steps,
-            )
-
             sample = sampler.sample(
                 x=torch.randn([y_0.shape[0], *x.shape[1:]], device=self.device),
                 y=None,
@@ -280,10 +278,10 @@ class DEFT:
                 sample_ema = sample_ema.to(self.device)
                 sample_ema = postprocess(sample_ema)
 
-        # Convert from [-1, 1] to [0, 1]
-        sample = postprocess(sample)
-        x = postprocess(x)
-        y_0 = postprocess(y_0)
+        # Convert from roughly [-1, 1] to unclamped [0, 1]
+        sample = postprocess(sample, clamp=False)
+        x = postprocess(x, clamp=False)
+        y_0 = postprocess(y_0, clamp=False)
 
         if log_images:
             for i in range(sample.shape[0]):
@@ -362,7 +360,7 @@ class DEFT:
                     "val/batch_psnr": np.mean(psnr.cpu().numpy()),
                 }
             )
-        # We need to return the sample in the range [-1, 1]
+        # We need to return the sample in the range roughly [-1, 1]
         return preprocess(sample), None
 
     def get_adjoint(self, x, y):
