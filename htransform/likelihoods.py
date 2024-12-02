@@ -32,12 +32,12 @@ from omegaconf import DictConfig, OmegaConf
 from torch.nn import functional as F
 
 from radon.tomography import Tomography
+from utils.degredations import H_functions
 from utils.degredations import HDR as HDR_old
 from utils.degredations import NonlinearBlurOperator as NLB
 from utils.degredations import PhaseRetrievalOperator as PR
 from utils.degredations import SuperResolution as SR
 from utils.fft_utils import fft2_m, ifft2_m
-
 
 def get_xi_condition(xi, x0hat, y, likelihood, cfg, masks=None):
     """
@@ -64,10 +64,10 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg, masks=None):
     """
 
     if (
-        isinstance(likelihood, Superresolution)
+        isinstance(likelihood.H, SR)
         or isinstance(likelihood, Radon)
-        or isinstance(likelihood, HDR)
-        or isinstance(likelihood, NonLinearBlur)
+        or isinstance(likelihood.H, HDR_old)
+        or isinstance(likelihood.H, NLB)
     ):
         xi_condition = xi
         if cfg.algo.use_x0hat:
@@ -111,7 +111,12 @@ def get_xi_condition(xi, x0hat, y, likelihood, cfg, masks=None):
     return xi_condition
 
 
+
 class Likelihood:
+    def __init__(self, H: H_functions, sigma_y: float):
+        self.H = H 
+        self.sigma_y = sigma_y
+
     def sample(self, x: torch.Tensor) -> torch.Tensor:
         samples = []
         for i in range(len(x)):
@@ -184,6 +189,35 @@ def MeanUpsample(x, scale):
     out = torch.zeros(n, c, h, scale, w, scale).to(x.device) + x.view(n, c, h, 1, w, 1)
     out = out.view(n, c, scale * h, scale * w)
     return out
+
+
+class GaussianLikelihood(Likelihood):
+    """
+    We require Gaussian Likelihoods of the forward N(Ax, sigma_y**2 I).
+    The forward operator A has to be implemented as a H_function from utils/degredations.py
+    
+    """
+    def __init__(self, H: H_functions, sigma_y: float):
+        super().__init__(H, sigma_y)
+
+
+    def loss(self, x: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
+        return None
+
+    def log_likelihood_grad(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        res = self.H.H(x) - y
+
+        if self.sigma_y == 0:
+            return -self.H.Ht(res).reshape(x.shape)
+        return -1 / self.sigma_y**2 * self.H.Ht(res).reshape(x.shape)    
+
+    def _sample(self, x: torch.Tensor) -> torch.Tensor:
+        y = self.H.H(x)
+
+        # TODO: Do we also scale sigma_y by 2 here?
+        y_noise = y + self.sigma_y * torch.randn_like(y)
+
+        return y_noise
 
 
 class Superresolution(Likelihood):
@@ -276,14 +310,12 @@ class NonLinearBlur(Likelihood):
 
         return -self.A_adjoint(res)
 
-
 class PhaseRetrieval(Likelihood):
     def __init__(self, oversample, sigma_y, device):
         self.oversample = oversample
         self.device = device
         self.sigma_y = sigma_y
-        # scale = round(args.forward_op.scale)
-        # self.AvgPool = torch.nn.AdaptiveAvgPool2d((256 // self.scale, 256 // self.scale))
+        
         self.forward_op = PR(oversample=self.oversample, device=device)
         self.pad = self.forward_op.pad
 
@@ -301,10 +333,6 @@ class PhaseRetrieval(Likelihood):
             grad = torch.autograd.grad(outputs=loss_obs, inputs=x)[0]
 
             x.detach()
-
-        # if self.sigma_y == 0:
-        #    return -self.A_adjoint(res)
-        # return -1 / self.sigma_y**2 * self.A_adjoint(res)
 
         return grad
 
@@ -495,6 +523,7 @@ class InPainting(Likelihood):
     def log_likelihood_grad(
         self, x: torch.Tensor, y: torch.Tensor, masks: torch.Tensor
     ) -> torch.Tensor:
+        
         grad_term = y - x * masks[:, None, :, :]
 
         if self.sigma_y == 0:

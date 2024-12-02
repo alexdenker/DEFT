@@ -9,6 +9,8 @@ from torch.nn import functional as F
 
 from .jpeg_torch import jpeg_decode, jpeg_encode
 
+import io
+from pathlib import Path
 
 # TODO: Remove likelihoods and add cheap_guidance etc here in H_functions
 class H_functions:
@@ -82,6 +84,14 @@ class H_functions:
 
         return self.V(self.add_zeros(temp))
 
+    def sample(self, x: torch.Tensor) -> torch.Tensor:
+        samples = []
+        for i in range(len(x)):
+            samples.append(self._sample(x[i : i + 1]))
+        return torch.concatenate(samples, dim=0)
+
+    def _sample(self, x: torch.Tensor) -> torch.Tensor:
+        raise NotImplementedError
 
 # a memory inefficient implementation for any general degradation H
 class GeneralH(H_functions):
@@ -788,7 +798,6 @@ def save_mask(f, mask):
 #    shape = d["shape"]
 #    m = np.unpackbits(m, count=np.prod(shape)).reshape(shape).view(bool)
 #    return m
-import io
 
 
 def load_mask(mask_path):
@@ -828,7 +837,6 @@ def build_degredation_model(cfg: DictConfig):
         return Compose(Hs)
 
 
-from pathlib import Path
 
 
 def build_one_degredation_model(cfg, h, w, c, deg: str):
@@ -836,7 +844,7 @@ def build_one_degredation_model(cfg, h, w, c, deg: str):
     if deg == "deno":
         H = Denoising(c, w, device)
     elif deg[:3] == "inp":
-        print("CFG: ", cfg.likelihood)
+
         exp_root = cfg.exp.root
         deg_type = deg.split("_")[-1]
         masks_root = Path(cfg.likelihood.forward_op.mask_filename).resolve() #os.path.join(exp_root, "masks", f"{deg_type}.npz")

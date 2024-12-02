@@ -127,25 +127,11 @@ class DEFT:
                 epoch % self.cfg.algo.finetune_args.save_model_every_n_epoch == 0
                 or epoch == self.cfg.algo.finetune_args.epochs - 1
             ):
-                if epoch == self.cfg.algo.finetune_args.epochs - 1:
-                    torch.save(
+                torch.save(
                         self.model.htransform_model.module.state_dict(),
                         os.path.join(self.log_dir, "model.pt"),
                     )
-                else:
-                    torch.save(
-                        self.model.htransform_model.module.state_dict(),
-                        os.path.join(self.log_dir, f"model_{epoch}.pt"),
-                    )
-                # TODO: Remove
-                # torch.save(
-                #     self.model.htransform_model.module.state_dict(),
-                #     os.path.join(self.log_dir, "model_tmp.pt"),
-                # )
-                # torch.save(
-                #     self.ema.ema_model.module.state_dict(),
-                #     os.path.join(self.log_dir, "ema_model_tmp.pt"),
-                # )
+                
 
             print("Average Loss: {:5f}".format(avg_loss / num_items))
             wandb.log(
@@ -212,37 +198,26 @@ class DEFT:
         # [-1, 1]
         x = x.to(self.device)
 
-        ATy = self.get_adjoint(x, y_0)
-        with torch.no_grad():
-            ts_for_scaling = (
-                torch.arange(self.diffusion.num_diffusion_timesteps)
-                .to(self.device)
-                .unsqueeze(-1)
-            )
+        if log_images:
+            with torch.no_grad():
+                ts_for_scaling = (
+                    torch.arange(self.diffusion.num_diffusion_timesteps)
+                    .to(self.device)
+                    .unsqueeze(-1)
+                )
 
-            ts_scaling = self.model.htransform_model.module.get_time_scaling(
-                ts_for_scaling
-            )
+                ts_scaling = self.model.htransform_model.module.get_time_scaling(
+                    ts_for_scaling
+                )
 
-        plt.figure()
-        plt.plot(ts_scaling[:, 0].cpu().numpy())
-        plt.title("Time scaling NN(t) * log_grad")
-        wandb.log({"time_scaling": wandb.Image(plt)})
-        plt.close()
-
-        combined_model = self.create_combined_model(y_0, masks)
-
-        if use_ema:
-            combined_model_ema = self.create_combined_model(y_0, masks, use_ema=True)
+            plt.figure()
+            plt.plot(ts_scaling[:, 0].cpu().numpy())
+            plt.title("Time scaling NN(t) * log_grad")
+            wandb.log({"time_scaling": wandb.Image(plt)})
+            plt.close()
 
         with torch.no_grad():
-            guidance_model = ClassifierGuidanceModel(
-                model=combined_model,
-                classifier=None,
-                diffusion=self.diffusion,
-                cfg=None,
-            )
-
+            
             cfg_dict = {
                 "algo": {
                     "eta": self.cfg.algo.val_args.eta,
@@ -251,33 +226,26 @@ class DEFT:
                 }
             }
             conf = OmegaConf.create(cfg_dict)
-            sampler = DDIM(model=guidance_model, cfg=conf)
+
+            if use_ema:
+                sampl_model = HTransformModel(model=self.model.model, 
+                                              htransform_model=self.ema.ema_model,
+                                              classifier=None,
+                                              diffusion=self.model.diffusion,
+                                              likelihood=self.model.likelihood,
+                                              cfg=self.cfg)
+            else:
+                sampl_model = self.model
+
+            sampler = DDIM(model=sampl_model, cfg=conf)
 
             print("sampling w/ point estimate model")
             sample = sampler.sample(
                 x=torch.randn([y_0.shape[0], *x.shape[1:]], device=self.device),
-                y=None,
+                y=[y_0, masks] if isinstance(self.model.likelihood, InPainting) else y_0,
                 ts=ts,
             )
             sample = sample.to(self.device)
-
-            # sample = sampler.sample(y)
-            if use_ema:
-                guidance_model_ema = ClassifierGuidanceModel(
-                    model=combined_model_ema,
-                    classifier=None,
-                    diffusion=self.diffusion,
-                    cfg=None,
-                )
-                sampler_ema = DDIM(model=guidance_model_ema, cfg=conf)
-                print("sampling w/ ema")
-                sample_ema = sampler_ema.sample(
-                    x=torch.randn([y_0.shape[0], *x.shape[1:]], device=self.device),
-                    y=None,
-                    ts=ts,
-                )
-                sample_ema = sample_ema.to(self.device)
-                sample_ema = postprocess(sample_ema)
 
         # Convert from roughly [-1, 1] to unclamped [0, 1]
         sample = postprocess(sample, clamp=False)
@@ -286,53 +254,17 @@ class DEFT:
 
         if log_images:
             for i in range(sample.shape[0]):
-                fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, figsize=(16, 6))
+                
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
-                if x.shape[1] == 3:
-                    # NOTE: Imshow needs images in [0, 1]
-                    ax1.set_title("ground truth")
-                    ax1.imshow(x[i, :, :, :].permute(1, 2, 0).cpu().detach().numpy())
-                    ax1.axis("off")
+                ax1.set_title("ground truth")
+                ax1.imshow(x[i, :, :, :].permute(1, 2, 0).cpu().detach().numpy())
+                ax1.axis("off")
 
-                    ax2.set_title("y")
-                    ax2.imshow(y_0[i, :, :, :].permute(1, 2, 0).cpu().numpy())
-                    ax2.axis("off")
-
-                    ax3.set_title("cheap_guidance")
-                    ax3.imshow((ATy[i, :, :, :].permute(1, 2, 0).cpu().numpy() + 1) / 2)
-                    ax3.axis("off")
-
-                    ax4.set_title("sample")
-                    ax4.imshow(sample[i, :, :, :].permute(1, 2, 0).cpu().numpy())
-                    ax4.axis("off")
-                    if use_ema:
-                        ax5.set_title("sample_ema")
-                        ax5.imshow(
-                            sample_ema[i, :, :, :].permute(1, 2, 0).cpu().numpy()
-                        )
-                        ax5.axis("off")
-
-                else:
-                    ax1.set_title("ground truth")
-                    ax1.imshow(x[i, 0, :, :].cpu().numpy(), cmap="gray")
-                    ax1.axis("off")
-
-                    ax2.set_title("y")
-                    ax2.imshow(y_0[i, 0, :, :].cpu().numpy().T, cmap="gray")
-                    ax2.axis("off")
-
-                    ax3.set_title("A.T(y)")
-                    ax3.imshow(ATy[i, 0, :, :].cpu().numpy(), cmap="gray")
-                    ax3.axis("off")
-
-                    ax4.set_title("sample")
-                    ax4.imshow(sample[i, 0, :, :].cpu().numpy(), cmap="gray")
-                    ax4.axis("off")
-                    if use_ema:
-                        ax5.set_title("sample ema")
-                        ax5.imshow(sample_ema[i, 0, :, :].cpu().numpy(), cmap="gray")
-                        ax5.axis("off")
-
+                ax2.set_title("sample")
+                ax2.imshow(sample[i, :, :, :].permute(1, 2, 0).cpu().numpy())
+                ax2.axis("off")
+                    
                 wandb.log({f"samples/{i}": wandb.Image(plt)})
                 plt.close()
 
@@ -348,63 +280,12 @@ class DEFT:
                 return psnr_
 
             psnr = _get_psnr(sample, x)
-            if use_ema:
-                psnr_ema = _get_psnr(sample_ema, x)
-                wandb.log(
-                    {
-                        "val/batch_psnr_ema": np.mean(psnr_ema.cpu().numpy()),
-                    }
-                )
 
             wandb.log(
                 {
                     "val/batch_psnr": np.mean(psnr.cpu().numpy()),
                 }
             )
+
         # We need to return the sample in the range roughly [-1, 1]
         return preprocess(sample), None
-
-    def get_adjoint(self, x, y):
-        if isinstance(self.model.likelihood, Superresolution):
-            ATy = self.model.likelihood.A_adjoint(y) * (self.model.likelihood.scale**2)
-        if isinstance(self.model.likelihood, Radon):
-            ATy = self.model.likelihood.fbp(y)
-        if isinstance(self.model.likelihood, NonLinearBlur):
-            ATy = self.model.likelihood.log_likelihood_grad(x, y)
-        else:
-            ATy = self.model.likelihood.A_adjoint(y)
-
-        return ATy
-
-    def create_combined_model(
-        self,
-        y,
-        masks,
-        use_ema=False,
-    ):
-        @torch.no_grad()
-        def model_fn(x, t):
-            eps1 = self.model.model(x, t)
-
-            alpha_t = self.model.diffusion.alpha(t).view(-1, 1, 1, 1)
-
-            x0hat = (x - eps1 * (1 - alpha_t).sqrt()) / alpha_t.sqrt()
-            xi_condition = get_xi_condition(
-                xi=x,
-                x0hat=x0hat,
-                y=y,
-                likelihood=self.model.likelihood,
-                masks=masks,
-                cfg=self.cfg,
-            )
-
-            if use_ema:
-                eps2 = self.ema.ema_model(xi_condition, t)
-            else:
-                eps2 = self.model.htransform_model(xi_condition, t)
-
-            eps = eps1 + eps2
-
-            return eps
-
-        return model_fn
