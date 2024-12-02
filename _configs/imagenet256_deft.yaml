@@ -12,5 +12,5 @@ defaults:
 - diffusion: linear1000
 - algo: deft
 - likelihood: sr4
-- wandb_config: shreyaspadhy
+- wandb_config: alexanderdenker
 - _self_

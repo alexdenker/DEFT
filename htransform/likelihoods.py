@@ -474,6 +474,7 @@ class InPainting(Likelihood):
         self.device = device
 
         mask_filename = Path(mask_filename).resolve()
+        print("PATH: ", mask_filename)
         with open(mask_filename, "rb") as f:
             data = f.read()
 
@@ -700,11 +701,12 @@ def get_likelihood(cfg: DictConfig, device: str):
             f"algo.deg and likelihood.name are not the same: {cfg.algo.deg} != {cfg.likelihood.name}. Loading likelihood_cfg from likelihood/{cfg.likelihood.name}.yaml"
         )
         likelihood_cfg = OmegaConf.load(
-            f"DEFT/_configs/likelihood/{cfg.likelihood.name}.yaml"
+            f"_configs/likelihood/{cfg.likelihood.name}.yaml"
         )
     else:
         likelihood_cfg = cfg.likelihood
 
+    print(likelihood_cfg)
     if cfg.algo.deg == "sr4":  # super resolution
         scale = round(likelihood_cfg.forward_op.scale)
         return Superresolution(

@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from omegaconf import DictConfig
 
 from datasets import build_one_dataset
-from htransform.likelihoods import Likelihood
+from htransform.likelihoods import Likelihood, get_xi_condition
+from utils.degredations import Inpainting2
 from models.diffusion import Diffusion
-
 
 class ClassifierGuidanceModel:
     def __init__(
@@ -61,7 +61,38 @@ class HTransformModel(ClassifierGuidanceModel):
 
         self.init_dataloaders()
 
-    # TODO (alex): Add a function here that does the forward pass for sampling here.
+    def __call__(self, xt, y, t, scale=1.0):
+        # Returns both the noise value (score function scaled) and the predicted x0.
+        alpha_t = self.diffusion.alpha(t).view(-1, 1, 1, 1)
+        
+
+        with torch.no_grad():
+            eps1 = self.model(xt, t)[:, :3]
+
+            x0hat = (xt - eps1 * (1 - alpha_t).sqrt()) / alpha_t.sqrt()
+
+            if isinstance(self.likelihood.H, Inpainting2):
+                y, masks = y 
+            else:
+                masks = None 
+
+            xi_condition = get_xi_condition(
+                    xi=xt,
+                    x0hat=x0hat,
+                    y=y,
+                    likelihood=self.likelihood,
+                    masks=masks,
+                    cfg=self.cfg,
+                )
+
+        eps2 = self.htransform_model(xi_condition, t)
+
+        et = eps1 + eps2
+
+        x0_pred = (xt - et * (1 - alpha_t).sqrt()) / alpha_t.sqrt()
+
+        return et, x0_pred
+
     def init_dataloaders(self):
         finetune_dset, val_dset = build_one_dataset(
             self.cfg, dataset_attr="finetune_dataset", return_splits=True

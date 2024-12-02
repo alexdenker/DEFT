@@ -782,13 +782,29 @@ def save_mask(f, mask):
     np.savez(f, m=m, shape=shape)
 
 
-def load_mask(f):
-    d = np.load(f)
-    m = d["m"]
-    shape = d["shape"]
-    m = np.unpackbits(m, count=np.prod(shape)).reshape(shape).view(bool)
-    return m
+#def load_mask(f):
+#    d = np.load(f)
+#    m = d["m"]
+#    shape = d["shape"]
+#    m = np.unpackbits(m, count=np.prod(shape)).reshape(shape).view(bool)
+#    return m
+import io
 
+
+def load_mask(mask_path):
+    with open(mask_path, "rb") as f:
+        data = f.read()
+
+    data = dict(np.load(io.BytesIO(data)))
+
+    for key in data:
+        data[key] = (
+            np.unpackbits(data[key], axis=None)[: np.prod([10000, 256, 256])]
+            .reshape([10000, 256, 256])
+            .astype(np.uint8)
+        )
+    print(data)
+    return data["20-30% freeform"]
 
 def build_degredation_model(cfg: DictConfig):
     print(cfg.algo)
@@ -812,14 +828,18 @@ def build_degredation_model(cfg: DictConfig):
         return Compose(Hs)
 
 
+from pathlib import Path
+
+
 def build_one_degredation_model(cfg, h, w, c, deg: str):
     device = torch.device("cuda")
     if deg == "deno":
         H = Denoising(c, w, device)
     elif deg[:3] == "inp":
+        print("CFG: ", cfg.likelihood)
         exp_root = cfg.exp.root
         deg_type = deg.split("_")[-1]
-        masks_root = os.path.join(exp_root, "masks", f"{deg_type}.npz")
+        masks_root = Path(cfg.likelihood.forward_op.mask_filename).resolve() #os.path.join(exp_root, "masks", f"{deg_type}.npz")
         m = load_mask(masks_root)
         m = torch.from_numpy(m)
         H = Inpainting(c, w, m, device)

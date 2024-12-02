@@ -30,7 +30,7 @@ class DEFT:
     def __init__(self, model: HTransformModel, cfg: DictConfig):
         self.model = model
         self.diffusion = model.diffusion
-        self.H = build_degredation_model(cfg)
+        self.H = build_degredation_model(cfg) # not used 
         self.cfg = cfg
         exp_root = cfg.exp.root
         exp_name = cfg.exp.name
@@ -59,6 +59,7 @@ class DEFT:
         self.device = self.model.model.device
 
     def train(self) -> None:
+        print(self.cfg)
         optimizer = Adam(
             self.model.htransform_model.parameters(),
             lr=self.cfg.algo.finetune_args.lr,

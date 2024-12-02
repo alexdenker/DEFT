@@ -12,15 +12,15 @@ def build_model(cfg):
     model = call(cfg.model)
     map_location = {"cuda:0": f"cuda:{dist.get_rank()}"}
     model_ckpt = ckpt_path_adm(cfg.model.ckpt, cfg)
-    logger.info(f"Loading model from {model_ckpt}..")
-    model.load_state_dict(torch.load(model_ckpt, map_location=map_location))
+    logger.info(f"Loading model from {model_ckpt}")
+    model.load_state_dict(torch.load(model_ckpt, map_location=map_location, weights_only=True))
     classifier = call(cfg.classifier)
 
     if getattr(cfg.classifier, "ckpt", None):
         classifier_ckpt = ckpt_path_adm(cfg.classifier.ckpt, cfg)
         logger.info(f"Loading classifier from {classifier_ckpt}..")
         classifier.load_state_dict(
-            torch.load(classifier_ckpt, map_location=map_location)
+            torch.load(classifier_ckpt, map_location=map_location, weights_only=True)
         )
     if classifier is not None:
         classifier.cuda(dist.get_rank())

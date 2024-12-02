@@ -17,11 +17,12 @@ from tqdm import tqdm
 import wandb
 from algos import build_algo
 from datasets import build_loader
-from htransform.likelihoods import get_likelihood
+from htransform.likelihoods import get_likelihood, GaussianLikelihood
+
 from models import build_model
 from models.classifier_guidance_model import ClassifierGuidanceModel, HTransformModel
 from models.diffusion import Diffusion
-from utils.degredations import get_degreadation_image
+from utils.degredations import get_degreadation_image, build_degredation_model
 from utils.distributed import common_init, get_logger, init_processes
 from utils.functions import get_timesteps, postprocess, preprocess, strfdt
 from utils.save import save_result
@@ -91,8 +92,9 @@ def main(cfg):
 
         diffusion = Diffusion(**cfg.diffusion)
 
+        H = build_degredation_model(cfg)
         if "deft" in cfg.algo.name:
-            likelihood = get_likelihood(cfg, device=model.device)
+            likelihood = GaussianLikelihood(H=H, sigma_y=cfg.algo.sigma_y) 
 
             cg_model = HTransformModel(
                 model, htransform_model, classifier, diffusion, likelihood, cfg
@@ -112,7 +114,7 @@ def main(cfg):
             H = algo.H
 
         ########################## DO FINETUNING IF NEEDED ##########
-        print(cfg.htransform_model.ckpt_path)
+        print("htransform checkpoint path: ", cfg.htransform_model.ckpt_path)
         if cfg.algo.name == "deft" and cfg.htransform_model.ckpt_path is None:
             algo.train()
 
@@ -146,6 +148,7 @@ def main(cfg):
 
                 # This is to account for scaling to [-1, 1]
                 # y_0 is the degradation that we consider
+                print("ALGO SIGMA Y : ", cfg.algo.sigma_y)
                 y_0 = (
                     y_0 + torch.randn_like(y_0) * cfg.algo.sigma_y * 2
                 )  # ?? what is it for???

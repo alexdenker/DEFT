@@ -3,7 +3,7 @@ name = "deft"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "torch==2.4.0+cu118; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "torch==2.4.0; sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')",
