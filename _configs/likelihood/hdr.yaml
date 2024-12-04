@@ -1,0 +1,4 @@
+name: hdr
+
+forward_op:
+  noise_std: 0.1

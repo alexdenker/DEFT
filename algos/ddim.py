@@ -6,6 +6,7 @@ from models.classifier_guidance_model import ClassifierGuidanceModel
 
 
 class DDIM:
+    # TODO (alex): it should take in HTransformModel or ClassifierGuidanceModel
     def __init__(self, model: ClassifierGuidanceModel, cfg: DictConfig):
         self.model = model
         self.diffusion = model.diffusion

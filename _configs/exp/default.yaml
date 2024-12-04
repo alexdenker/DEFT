@@ -6,7 +6,7 @@ save_evolution: False
 ckpt_root: "pretrained_model"
 samples_root: "samples"
 overwrite: True
-num_steps: 50
+num_steps: 100
 start_step: 1000
 end_step: 0
 smoke_test: 4

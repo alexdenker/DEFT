@@ -186,6 +186,7 @@ def get_moments(
     else:
         pbar = loader
 
+    print("Getting moments")
     for batch in pbar:
         features = get_batch_features(batch[0], model, device).astype(np.float64)
         if moment1 is None:
@@ -214,8 +215,7 @@ def main(cfg: DictConfig):
     torch.hub.set_dir(os.path.join(cfg.exp.root, "hub"))
 
     logger = get_logger("fid", cfg)
-    fid_root = os.path.join(cfg.exp.root, "fid_stats")
-    os.makedirs(fid_root, exist_ok=True)
+    fid_root = cfg.save_path
     loader = build_loader(cfg)
 
     # print('cfg', cfg)
@@ -225,16 +225,14 @@ def main(cfg: DictConfig):
 
     if cfg.mean_std_stats is False:
         if "/" in cfg.save_path:
-            save_dir = "/".join(cfg.save_path.split("/")[:-1])
-            save_dir = os.path.join(fid_root, save_dir)
+            save_dir = "/".join(fid_root.split("/")[:-1])
             os.makedirs(save_dir, exist_ok=True)
-        save_path = f"{fid_root}/{cfg.save_path}.npy"
+        save_path = f"{fid_root}.npy"
     else:
         if "/" in cfg.save_path:
-            save_dir = "/".join(cfg.save_path.split("/")[:-1])
-            save_dir = os.path.join(fid_root, save_dir)
+            save_dir = "/".join(fid_root.split("/")[:-1])
             os.makedirs(save_dir, exist_ok=True)
-        save_path = f"{fid_root}/{cfg.save_path}_mean_std.npz"
+        save_path = f"{fid_root}.npz"
 
     if os.path.exists(save_path):
         logger.info(f"Stats already exists for file {save_path}.")

@@ -1,0 +1,4 @@
+name: blur
+
+forward_op:
+  opt_yml_path: "./bkse/options/generate_blur/default.yml"

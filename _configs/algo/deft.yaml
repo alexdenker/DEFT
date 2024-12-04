@@ -1,0 +1,27 @@
+# Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved
+
+name: 'deft'
+deg: "sr4"
+finetune_args:
+  batch_size: 100
+  shuffle: true
+  drop_last: true
+  epochs: 100
+  lr: 0.001
+  log_freq: 10
+  save_model_every_n_epoch: -1
+  lr_annealing: true
+val_args:
+  batch_size: 10
+  psnr_batch_size: 100
+  num_steps: 100
+  eta: 0.0
+  use_ema: false
+  sample_freq: 5
+  psnr_sample_freq: -1
+ema:
+  beta: 0.999
+  update_after_step: 400
+  update_every: 10
+use_x0hat: true
+use_loggrad: true

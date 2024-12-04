@@ -1,3 +1,4 @@
+import io
 import os
 
 import numpy as np
@@ -8,7 +9,10 @@ from torch.nn import functional as F
 
 from .jpeg_torch import jpeg_decode, jpeg_encode
 
+import io
+from pathlib import Path
 
+# TODO: Remove likelihoods and add cheap_guidance etc here in H_functions
 class H_functions:
     """
     A class replacing the SVD of a matrix H, perhaps efficiently.
@@ -80,6 +84,14 @@ class H_functions:
 
         return self.V(self.add_zeros(temp))
 
+    def sample(self, x: torch.Tensor) -> torch.Tensor:
+        samples = []
+        for i in range(len(x)):
+            samples.append(self._sample(x[i : i + 1]))
+        return torch.concatenate(samples, dim=0)
+
+    def _sample(self, x: torch.Tensor) -> torch.Tensor:
+        raise NotImplementedError
 
 # a memory inefficient implementation for any general degradation H
 class GeneralH(H_functions):
@@ -780,13 +792,28 @@ def save_mask(f, mask):
     np.savez(f, m=m, shape=shape)
 
 
-def load_mask(f):
-    d = np.load(f)
-    m = d["m"]
-    shape = d["shape"]
-    m = np.unpackbits(m, count=np.prod(shape)).reshape(shape).view(bool)
-    return m
+#def load_mask(f):
+#    d = np.load(f)
+#    m = d["m"]
+#    shape = d["shape"]
+#    m = np.unpackbits(m, count=np.prod(shape)).reshape(shape).view(bool)
+#    return m
 
+
+def load_mask(mask_path):
+    with open(mask_path, "rb") as f:
+        data = f.read()
+
+    data = dict(np.load(io.BytesIO(data)))
+
+    for key in data:
+        data[key] = (
+            np.unpackbits(data[key], axis=None)[: np.prod([10000, 256, 256])]
+            .reshape([10000, 256, 256])
+            .astype(np.uint8)
+        )
+    print(data)
+    return data["20-30% freeform"]
 
 def build_degredation_model(cfg: DictConfig):
     print(cfg.algo)
@@ -810,14 +837,17 @@ def build_degredation_model(cfg: DictConfig):
         return Compose(Hs)
 
 
+
+
 def build_one_degredation_model(cfg, h, w, c, deg: str):
     device = torch.device("cuda")
     if deg == "deno":
         H = Denoising(c, w, device)
     elif deg[:3] == "inp":
+
         exp_root = cfg.exp.root
         deg_type = deg.split("_")[-1]
-        masks_root = os.path.join(exp_root, "masks", f"{deg_type}.npz")
+        masks_root = Path(cfg.likelihood.forward_op.mask_filename).resolve() #os.path.join(exp_root, "masks", f"{deg_type}.npz")
         m = load_mask(masks_root)
         m = torch.from_numpy(m)
         H = Inpainting(c, w, m, device)
@@ -838,6 +868,44 @@ def build_one_degredation_model(cfg, h, w, c, deg: str):
             # import pdb; pdb.set_trace()
 
         m = torch.from_numpy(m)
+        H = Inpainting2(c, w, m, device)
+    elif deg == "inp_deft":
+        exp_root = cfg.exp.root
+        deg_type = deg.split("_")[-1]
+        masks_root = os.path.join(exp_root, "masks", f"{deg_type}.npz")
+        # m = load_mask(masks_root)
+
+        mask_filename = "/home/sp2058/adapt-diffusions/imagenet_freeform_masks.npz"
+        with open(mask_filename, "rb") as f:
+            data = f.read()
+
+        data = dict(np.load(io.BytesIO(data)))
+
+        for key in data:
+            data[key] = (
+                np.unpackbits(data[key], axis=None)[: np.prod([10000, 256, 256])]
+                .reshape([10000, 256, 256])
+                .astype(np.uint8)
+            )
+
+        m = torch.tensor(data["20-30% freeform"], device=device)
+
+        # Tile m for 3 channels
+        m = m.unsqueeze(1).repeat(1, 3, 1, 1)
+
+        m = 1 - m
+
+        if h != 256 and w != 256:
+            n = m.shape[0]
+            m = np.reshape(m, (n, 3, 256, 256))
+            m = np.repeat(m, w // 256, axis=2)
+            m = np.repeat(m, h // 256, axis=3)
+            m = np.reshape(m, (n, 3 * h * w))
+            # print('m.shape', m.shape)
+            # print('m', m)
+            # import pdb; pdb.set_trace()
+
+        # m = torch.from_numpy(m)
         H = Inpainting2(c, w, m, device)
     elif deg == "deblur_uni":
         H = Deblurring(torch.Tensor([1 / 9] * 9).to("cuda"), c, w, device)
@@ -895,7 +963,7 @@ def build_one_degredation_model(cfg, h, w, c, deg: str):
         # current_dir = os.getcwd()
 
         # current_dir = '/lustre/fsw/nvresearch/mmardani/source/latent-diffusion-sampling/pgdm'
-        current_dir = "/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm"
+        current_dir = os.getcwd()
 
         opt_yml_path = os.path.join(
             current_dir, "bkse/options/generate_blur/default.yml"
@@ -1028,10 +1096,10 @@ class NonlinearBlurOperator(NonLinearOperator, H_functions):
                 "pretrained"
             ]  # this nees to be changed to the original one
             # model_path = os.path.join(os.dirname(os.dirname(opt_yml_path)), model_path)
-            # current_dir = os.getcwd()
+            current_dir = os.getcwd()
             # current_dir = '/lustre/fsw/nvresearch/mmardani/source/latent-diffusion-sampling/pgdm'
             # current_dir = '/home/mmardani/research/stable-diffusion-sampling-gitlab/pgdm'
-            # model_path = os.path.join(current_dir, model_path)
+            model_path = os.path.join(current_dir, model_path)
             print("model_path", model_path)
         blur_model = KernelWizard(opt)
         blur_model.eval()

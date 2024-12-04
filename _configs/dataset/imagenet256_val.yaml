@@ -1,7 +1,7 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved
 
 name: "ImageNet_256x256"
-root: "/anfs/gpucluster/datasets/imagenet/isv/"
+root: "/home/alexdenker/ImageNet" #"/anfs/gpucluster/datasets/imagenet/isv/"
 split: "val"
 image_size: 256
 channels: 3

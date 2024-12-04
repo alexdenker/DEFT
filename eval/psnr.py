@@ -4,9 +4,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
-from torchmetrics.functional import (
-    structural_similarity_index_measure,
-)
+from torchmetrics.functional import structural_similarity_index_measure
 
 # StructuralSimilarityIndexMeasure
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
@@ -60,6 +58,8 @@ def main(cfg: DictConfig):
             f.write(f"PSNR: {psnrs.mean().item()}\n")
             f.write(f"SSIM: {ssims.mean().item()}\n")
             f.write(f"LPIPS: {lpips.mean().item()}")
+
+        return psnrs.mean().item(), ssims.mean().item(), lpips.mean().item()
 
     dist.barrier()
 
