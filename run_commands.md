@@ -66,8 +66,17 @@ htransform_model.ckpt_path=/home/sp2058/DEFT/outputs/model_ckpts/sr4_deft_8fi2wu
 
 ```bash
 uv run eval.py \
-save_path=outputs/samples/sr4_deft_8fi2wuj3/ \
+save_path="/home/sp2058/DEFT/outputs/samples/old_ckpt_new_sampling" \
 dist.num_processes_per_node=1 \
 dist.port=12356 \
-wandb_config.log=True
+wandb_config.log=False
 ```
+
+# Old model weights from https://wandb.ai/shreyaspadhy/diff-models_finetuning/runs/kdbbaeqk?nw=nwusershreyaspadhy
+/home/sp2058/adapt-diffusions/outputs/kdbbaeqk
+
+# Old generated eval samples from https://wandb.ai/shreyaspadhy/diff-models_finetuning/runs/kdbbaeqk?nw=nwusershreyaspadhy
+/home/sp2058/adapt-diffusions/save_log/sr_htransform_kdbbaeqk
+
+# New generated samples
+outputs/samples/sr4_deft_8fi2wuj3/
